@@ -1,7 +1,8 @@
 PY ?= .venv/bin/python
 REPEATS ?= 3
 
-.PHONY: setup test smoke list-share data-S data-M data-L data-XL bench bench-xl report clean
+# data-% is a pattern rule; its targets must NOT be .PHONY or make skips the pattern search.
+.PHONY: setup test smoke list-share bench bench-xl report clean
 
 setup:            ## create .venv and install everything
 	python3 -m venv .venv

@@ -1,8 +1,13 @@
+import os
+
 import polars as pl
 
 from bench import workload as W
 
-STREAMING = "streaming"
+# Polars' default is engine="auto". We use its streaming engine because it is the one
+# Polars recommends for data that may not fit in memory, which is the point of the L/XL
+# tiers. Override with POLARS_ENGINE=auto (or in-memory) to compare. Disclosed in README.
+ENGINE = os.environ.get("POLARS_ENGINE", "streaming")
 
 
 class PolarsEngine:
@@ -12,19 +17,11 @@ class PolarsEngine:
     name = "polars"
 
     def start(self):
-        pass
+        return f"polars engine={ENGINE}; write+merge=delta-rs"
 
     def register(self, trips_path, zones_path):
         self.trips = pl.scan_delta(trips_path)
         self.zones = pl.scan_delta(zones_path)
-
-    def _with_pu_zone(self):
-        return self.trips.join(
-            self.zones.select("location_id", "borough", "zone"),
-            left_on="pu_location_id",
-            right_on="location_id",
-            how="inner",
-        )
 
     def transform_write(self, out_path):
         pz = self.zones.select(pl.col("location_id"), pl.col("borough").alias("pu_borough"))
@@ -46,33 +43,35 @@ class PolarsEngine:
             out_path,
             mode="overwrite",
             delta_write_options={"partition_by": W.SILVER_PARTITIONS},
-            engine=STREAMING,
+            engine=ENGINE,
         )
-        return "write=delta-rs (via sink_delta)"
+
+    def register_silver(self, silver_path):
+        self.silver = pl.scan_delta(silver_path)
 
     def aggregate(self):
-        ts = pl.col("pickup_ts")
         return (
-            self._with_pu_zone()
-            .group_by(
-                pl.col("borough"),
-                ts.dt.year().cast(pl.Int32).alias("year"),
-                ts.dt.month().cast(pl.Int32).alias("month"),
-                ts.dt.hour().cast(pl.Int32).alias("hour"),
+            self.silver.group_by(
+                pl.col("pu_borough").alias("borough"),
+                pl.col("year"),
+                pl.col("month"),
+                pl.col("pickup_ts").dt.hour().cast(pl.Int32).alias("hour"),
             )
             .agg(
                 pl.len().alias("trips"),
                 pl.col("total_amount").sum().alias("revenue"),
                 pl.col("trip_distance").mean().alias("avg_distance"),
             )
-            .collect(engine=STREAMING)
+            .collect(engine=ENGINE)
             .to_arrow()
         )
 
     def top_zones(self):
         zr = (
-            self._with_pu_zone()
-            .group_by("borough", "zone", pl.col("pu_location_id").alias("location_id"))
+            self.silver.join(
+                self.zones.select("location_id", "zone"), left_on="pu_location_id", right_on="location_id", how="inner"
+            )
+            .group_by(pl.col("pu_borough").alias("borough"), "zone", pl.col("pu_location_id").alias("location_id"))
             .agg(
                 pl.len().alias("trips"),
                 pl.col("total_amount").sum().alias("revenue"),
@@ -86,7 +85,7 @@ class PolarsEngine:
             zr.sort(["borough", "revenue", "location_id"], descending=[False, True, False])
             .with_columns(pl.int_range(1, pl.len() + 1).over("borough").alias("rnk"))
             .filter(pl.col("rnk") <= 10)
-            .collect(engine=STREAMING)
+            .collect(engine=ENGINE)
             .to_arrow()
         )
 
@@ -106,7 +105,6 @@ class PolarsEngine:
             .when_not_matched_insert_all()
             .execute()
         )
-        return "merge=delta-rs (via write_delta)"
 
     def stop(self):
         pass

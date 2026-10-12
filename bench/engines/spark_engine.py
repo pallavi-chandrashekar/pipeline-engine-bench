@@ -1,10 +1,18 @@
 import json
 import os
+from pathlib import Path
 
 import psutil
 
+from bench import config as C
 from bench import workload as W
 from bench.engines import NotSupported
+
+# After the first (untimed warm-up) session resolves the Delta jars through Ivy, their
+# local paths are cached here so timed runs load them directly. Otherwise every timed
+# startup would include Maven/Ivy dependency resolution, which a real Spark install
+# with jars on the classpath never pays.
+JARS_CACHE = C.DATA_DIR / ".spark_delta_jars.json"
 
 
 def _driver_memory() -> str:
@@ -14,16 +22,25 @@ def _driver_memory() -> str:
     return f"{max(2, int(psutil.virtual_memory().total / 2**30 * 0.6))}g"
 
 
+def _cached_jars() -> list[str] | None:
+    try:
+        jars = json.loads(JARS_CACHE.read_text())
+    except (OSError, ValueError):
+        return None
+    paths = [j.removeprefix("file://") for j in jars]
+    return jars if jars and all(Path(p).exists() for p in paths) else None
+
+
 class SparkEngine:
     """Apache Spark (local[*]) with Delta Lake.
 
-    Defaults are left alone apart from driver memory, the Delta extensions and
-    disabling the UI. Extra settings can be passed as JSON in SPARK_EXTRA_CONF,
-    e.g. SPARK_EXTRA_CONF='{"spark.sql.shuffle.partitions": "16"}'.
+    Defaults are left alone apart from driver memory, the Delta extensions, a UTC
+    session time zone and disabling the UI. Extra settings can be passed as JSON in
+    SPARK_EXTRA_CONF, e.g. SPARK_EXTRA_CONF='{"spark.sql.shuffle.partitions": "16"}'.
 
-    BENCH_SPARK_NO_DELTA=1 reads the Delta snapshot's parquet files and writes
-    plain parquet instead (MERGE is skipped). Only for machines that cannot download
-    the Delta jars from Maven Central; never use it for published numbers.
+    BENCH_SPARK_NO_DELTA=1 reads the Delta snapshot's parquet files and writes plain
+    parquet instead (MERGE is skipped). Only for machines that cannot download the
+    Delta jars from Maven Central; never use it for published numbers.
     """
 
     name = "spark"
@@ -42,19 +59,34 @@ class SparkEngine:
         )
         for k, v in json.loads(os.environ.get("SPARK_EXTRA_CONF", "{}")).items():
             b = b.config(k, v)
+        jars_mode = "none"
         if not self.no_delta:
-            from delta import configure_spark_with_delta_pip
-
             b = b.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension").config(
                 "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"
             )
-            b = configure_spark_with_delta_pip(b)
+            cached = _cached_jars()
+            if cached:
+                b = b.config("spark.jars", ",".join(cached))
+                jars_mode = "local"
+            else:
+                from delta import configure_spark_with_delta_pip
+
+                b = configure_spark_with_delta_pip(b)
+                jars_mode = "ivy-resolved"
         self.spark = b.getOrCreate()
         self.spark.sparkContext.setLogLevel("ERROR")
-        return f"driver_memory={_driver_memory()}" + ("; NO-DELTA test mode" if self.no_delta else "")
+        if jars_mode == "ivy-resolved":
+            jars = [j for j in self.spark.sparkContext.getConf().get("spark.jars", "").split(",") if j]
+            if any("delta-spark" in j for j in jars):
+                JARS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+                JARS_CACHE.write_text(json.dumps(jars))
+        return f"driver_memory={_driver_memory()}; delta_jars={jars_mode}" + (
+            "; NO-DELTA test mode" if self.no_delta else "")
 
     def _read(self, path):
         if self.no_delta:
+            if not (Path(path) / "_delta_log").exists():
+                return self.spark.read.parquet(path)  # silver written by this engine in test mode
             from deltalake import DeltaTable
 
             return self.spark.read.parquet(*DeltaTable(path).file_uris())
@@ -70,6 +102,9 @@ class SparkEngine:
             w.parquet(out_path)
         else:
             w.format("delta").save(out_path)
+
+    def register_silver(self, silver_path):
+        self._read(silver_path).createOrReplaceTempView("silver")
 
     def aggregate(self):
         return self.spark.sql(W.AGGREGATE_SQL).toArrow()

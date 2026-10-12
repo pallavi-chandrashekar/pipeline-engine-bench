@@ -18,9 +18,9 @@ over the same local Delta tables, at four data sizes, and records:
 ## Results
 
 One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per engine × tier, source
-**NYC TLC** 2019 yellow-taxi data. Full tables and environment:
-[`results/bench-20261012/`](results/bench-20261012/). Your numbers will differ — see
-[Fairness notes](#fairness-notes-read-before-quoting-numbers).
+**NYC TLC** yellow-taxi data (2019 for S/M/L; 2019–2023 for XL). Full tables and environment under
+[`results/`](results/) — `bench-20261012` for S/M/L, `bench-20261012-xl` for XL. Your numbers will
+differ — see [Fairness notes](#fairness-notes-read-before-quoting-numbers).
 
 **Pipeline time** — `startup + transform_write + aggregate + top_zones`, median of 3 valid runs:
 
@@ -29,32 +29,37 @@ One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per eng
 | S | 7.7M | 1.6s | 1.5s | 1.6s | 10s |
 | M | 22.6M | 2.4s | 2.0s | 2.5s | 15s |
 | L | 84.6M | 5.5s | 5.0s | 22s | 34s |
+| XL | 218.1M | 13s | 16s | **792s** | 63s |
 
-![Pipeline time by engine and tier](results/bench-20261012/pipeline_time.png)
+![Pipeline time by engine and tier (S/M/L)](results/bench-20261012/pipeline_time.png)
 
-- **You don't need Spark for ≤ 85M rows on one machine.** DuckDB and Polars finish the whole
-  pipeline in ~5s at L (84.6M rows); Spark takes 34s and never closes the gap at any tier.
-- **Spark's gap is proportional, not a fixed overhead.** It is 6.2–6.3× slower than DuckDB at every
-  tier (S 6.3×, M 6.2×, L 6.2×). If JVM startup were the main cost, the ratio would shrink as data
-  grows; it doesn't. Startup is only ~3s of Spark's 10s even at S. On one machine, Spark's per-row
-  cost is simply higher.
-- **delta-rs scales worst of the three fast engines, and the cause is its query path, not Delta
-  writes.** It tracks DuckDB/Polars at S and M, then jumps to 22s at L, almost all of it in
-  `transform_write`. DuckDB writes its silver table through the *same* delta-rs writer and finishes
-  that stage in 4.7s. So the slowdown is in delta-rs's embedded DataFusion execution of the joins
-  (`QueryBuilder`), not in writing Delta.
+- **You don't need Spark on one machine, even at 218M rows.** DuckDB and Polars finish the whole
+  pipeline in ~5s at L (84.6M rows) and ~13–16s at XL (218M); Spark takes 34s and 63s. DuckDB/Polars
+  win at every size tested.
+- **Spark's gap stays wide through L, then narrows at XL.** Spark is a flat 6.2–6.3× slower than
+  DuckDB through L (S 6.3×, M 6.2×, L 6.2×) — not startup-dominated (startup is ~3s of Spark's 10s at
+  S), just a higher per-row cost. Only at XL does the ratio fall, to 4.9×, the first sign Spark's
+  fixed costs amortize. So the crossover where Spark pays off sits beyond one machine / past 218M
+  rows, not within the sizes most jobs hit.
+- **delta-rs scales worst of the fast engines, and the cause is its query path, not Delta writes.**
+  It tracks DuckDB/Polars at S and M, then jumps to 22s at L and **792s at XL** (~60× slower than
+  DuckDB), almost all of it in `transform_write`. DuckDB writes its silver table through the *same*
+  delta-rs writer and finishes that stage in 4.7s (L) / 11s (XL), so the slowdown is in delta-rs's
+  embedded DataFusion execution of the joins (`QueryBuilder`), not in writing Delta.
 - **Only 3 of 4 engines can MERGE into Delta.** Spark, delta-rs and Polars can; DuckDB's `delta`
   extension can INSERT but not MERGE/UPDATE, so its MERGE is `n/a`. Polars delegates its writes and
   MERGE to delta-rs, so those two share a code path (and near-identical MERGE bars).
 - **Spark's memory number is mostly its heap setting.** At L, Spark peaks at 11.3 GB on the default
   (60% of RAM) but 4.9 GB under `SPARK_DRIVER_MEMORY=4g` — at the *same* pipeline time. It grows
-  into the heap it's given rather than needing it. The leanest engine at L is DuckDB (4.6 GB).
+  into the heap it's given rather than needing it. Nothing is OOM-killed even at XL (macOS swaps
+  instead): there Spark peaks at 12.0 GB, delta-rs 11.0, polars 9.2, and DuckDB stays leanest (5.7 GB).
 
-![Peak memory by engine and tier](results/bench-20261012/peak_memory.png)
+![Peak memory by engine and tier (S/M/L)](results/bench-20261012/peak_memory.png)
 
 Every run above passed its correctness check (`3/3` valid) against an engine-independent reference —
 a fast wrong answer wouldn't have counted. See
-[`summary.md`](results/bench-20261012/summary.md) for the full per-stage breakdown, and the
+[`summary.md`](results/bench-20261012/summary.md) for the full S/M/L per-stage breakdown,
+[`bench-20261012-xl/`](results/bench-20261012-xl/) for XL (its own charts), and the
 [`-spark4g`](results/bench-20261012-spark4g/) / [`-polarsauto`](results/bench-20261012-polarsauto/)
 folders for the constrained-Spark and default-Polars comparison runs.
 

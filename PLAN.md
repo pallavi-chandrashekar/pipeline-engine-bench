@@ -16,21 +16,26 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 
 | Path | Risk | Verified by |
 |---|---|---|
-| Spark + Delta (jar resolution, Delta read/write, MERGE) | medium: never executed | Phase 1 `make smoke` |
-| Spark's cached Delta jars (`data/.spark_delta_jars.json`) | medium: depends on what `spark.jars` holds after Ivy resolution | Phase 1, 2nd run's notes show `delta_jars=local` |
-| DuckDB's native `delta_scan` | low | Phase 1 notes show `read=delta_scan` |
+| ~~Spark + Delta (jar resolution, Delta read/write, MERGE)~~ | ~~medium: never executed~~ | ✅ Phase 1 `make smoke`: pass, MERGE 4.8s |
+| ~~Spark's cached Delta jars (`data/.spark_delta_jars.json`)~~ | ~~medium~~ | ✅ 2nd run notes `delta_jars=local`, no Maven re-fetch |
+| ~~DuckDB's native `delta_scan`~~ | ~~low~~ | ✅ Phase 1 notes show `read=delta_scan` |
 | Delta Sharing download (table name, schema, partitioning) | medium: table name and columns are from memory, not a live listing | Phase 2 `make list-share` |
 | NYC TLC downloads for XL | low | Phase 4 |
 
-## Phase 1: Local setup and smoke test (~30 min)
+## Phase 1: Local setup and smoke test (~30 min) — ✅ DONE (2026-10-12)
 
-- [ ] `java -version` shows 17 or 21 (`brew install openjdk@21` on macOS)
-- [ ] `make setup`
-- [ ] `make test`: 6 passed
-- [ ] `make smoke`, twice. Then check `results/smoke/summary.md`:
-  - [ ] all four engines show `pass` in Checks
-  - [ ] Spark MERGE has a time, not `n/a` or `error`
-  - [ ] the 2nd run's engine notes say `delta_jars=local` and `read=delta_scan`
+- [x] `java -version` shows 17 or 21 (`brew install openjdk@21` on macOS) — installed OpenJDK 21.0.12.1
+- [x] `make setup` — `.venv` on Python 3.14.3; all deps installed (pyspark 4.0.1, delta-spark 4.0.0, duckdb 1.5.6, polars 2.0.0, deltalake 1.6.6)
+- [x] `make test`: 6 passed
+- [x] `make smoke`, twice. Then check `results/smoke/summary.md`:
+  - [x] all four engines show `pass` in Checks
+  - [x] Spark MERGE has a time, not `n/a` or `error` — 4.8s
+  - [x] the 2nd run's engine notes say `delta_jars=local` and `read=delta_scan`
+
+> **openjdk@21 is keg-only** (not symlinked onto PATH). Every command that launches Spark —
+> `make smoke`, `make bench`, `make bench-xl` — needs `JAVA_HOME` exported first:
+> `export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"`
+> (or add it to `~/.zshrc`). `make test`, `make data-*` and the non-Spark engines don't need it.
 - If it fails, look at the worker log: `results/smoke/work/SYN/<engine>/0/worker.log`.
   Likely suspects:
   - **Delta jar errors** → delete `data/.spark_delta_jars.json` and rerun. If that fixes it, the cache

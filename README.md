@@ -33,10 +33,16 @@ One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per eng
 ![Pipeline time by engine and tier](results/bench-20261012/pipeline_time.png)
 
 - **You don't need Spark for ≤ 85M rows on one machine.** DuckDB and Polars finish the whole
-  pipeline in ~5s at L (84.6M rows); Spark takes 34s and never closes the gap at any tier. Much of
-  Spark's cost is fixed (JVM launch + Delta-log read), so it hurts most on the small tiers.
-- **delta-rs scales worst of the three fast engines.** It tracks DuckDB/Polars at S and M, then
-  jumps to 22s at L — "fast at small sizes" didn't extrapolate.
+  pipeline in ~5s at L (84.6M rows); Spark takes 34s and never closes the gap at any tier.
+- **Spark's gap is proportional, not a fixed overhead.** It is 6.2–6.3× slower than DuckDB at every
+  tier (S 6.3×, M 6.2×, L 6.2×). If JVM startup were the main cost, the ratio would shrink as data
+  grows; it doesn't. Startup is only ~3s of Spark's 10s even at S. On one machine, Spark's per-row
+  cost is simply higher.
+- **delta-rs scales worst of the three fast engines, and the cause is its query path, not Delta
+  writes.** It tracks DuckDB/Polars at S and M, then jumps to 22s at L, almost all of it in
+  `transform_write`. DuckDB writes its silver table through the *same* delta-rs writer and finishes
+  that stage in 4.7s. So the slowdown is in delta-rs's embedded DataFusion execution of the joins
+  (`QueryBuilder`), not in writing Delta.
 - **Only 3 of 4 engines can MERGE into Delta.** Spark, delta-rs and Polars can; DuckDB's `delta`
   extension can INSERT but not MERGE/UPDATE, so its MERGE is `n/a`. Polars delegates its writes and
   MERGE to delta-rs, so those two share a code path (and near-identical MERGE bars).

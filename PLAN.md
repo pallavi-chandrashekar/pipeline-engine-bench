@@ -86,12 +86,17 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 
 > Machine: macOS, 14 cores, 24 GB RAM, OpenJDK 21. Full env in each run's `env.json`.
 
-## Phase 4: XL (optional, a long run)
+## Phase 4: XL — ✅ DONE (2026-10-12)
 
-- [ ] ~40 GB free disk
-- [ ] `make data-XL && make bench-xl`
-- [ ] An engine that crashes or gets `killed` at XL is a result, not a failure. It shows up in
-  the charts.
+- [x] ~40 GB free disk (tier is ~5 GB on disk; 117 GB free at the time)
+- [x] `make data-XL SOURCE=tlc && make bench-xl` → run id `bench-20261012-xl`. **`SOURCE=tlc` is
+  required** — the default share source can't feed the pipeline (see Phase 2).
+- [x] XL = 218,116,121 rows (2019–2023), 100% rows kept. All four engines 3/3 valid, all checks
+  pass; **no crashes or `killed`** (macOS swaps rather than OOM-kills).
+  - Pipeline medians: duckdb 13s / polars 16s / spark 63s / **delta-rs 792s** — delta-rs's embedded
+    DataFusion query path collapses (~60× DuckDB; 790s of 792s in `transform_write`).
+  - Spark's gap vs DuckDB narrows from 6.2× (L) to 4.9× (XL) — the first sign of a crossover.
+  - README Results table + findings updated with the XL row.
 
 ## Phase 5: Publish
 
@@ -107,7 +112,8 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 ## Phase 6: LinkedIn posts built from the results
 
 1. **Benchmark headline.** The pipeline chart, the crossover finding, repo link in first comment.
-2. **"Only 2 of 4 engines can MERGE into Delta."** Includes the fact that Polars delegates to delta-rs.
+2. **"Only 3 of 4 engines can MERGE into Delta."** Spark, delta-rs and Polars can; DuckDB can't.
+   Includes the fact that Polars delegates to delta-rs (so 3 engines, but 2 MERGE implementations).
 3. **Method post.** "A fast wrong answer isn't a result": how the correctness reference works.
    This is the senior-engineer angle.
 4. **Memory post.** Spark heap at 60% vs 4g: what peak memory actually measures.

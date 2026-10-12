@@ -1,0 +1,5 @@
+tier,rows,engine,pipeline_s,pipeline_status,valid_runs,pipeline_peak_mb,merge_s,merge_status,merge_peak_mb,checks
+XL,218116121,spark,63.037,ok,3/3,12247.8,39.81,ok,7814.4,pass
+XL,218116121,duckdb,12.774,ok,3/3,5848.4,,n/a,,pass
+XL,218116121,polars,16.048,ok,3/3,9377.8,27.208,ok,8600.9,pass
+XL,218116121,delta-rs,792.213,ok,3/3,11214.5,26.968,ok,8948.2,pass

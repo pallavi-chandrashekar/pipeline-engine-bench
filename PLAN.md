@@ -109,17 +109,6 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 - [ ] (you) Pin the repo on your GitHub profile; add topics: `delta-lake`, `spark`, `duckdb`,
   `polars`, `benchmark`, `data-engineering`
 
-## Phase 6: LinkedIn posts built from the results
-
-1. **Benchmark headline.** The pipeline chart, the crossover finding, repo link in first comment.
-2. **"Only 3 of 4 engines can MERGE into Delta."** Spark, delta-rs and Polars can; DuckDB can't.
-   Includes the fact that Polars delegates to delta-rs (so 3 engines, but 2 MERGE implementations).
-3. **Method post.** "A fast wrong answer isn't a result": how the correctness reference works.
-   This is the senior-engineer angle.
-4. **Memory post.** Spark heap at 60% vs 4g: what peak memory actually measures.
-
-Post only numbers from your own runs, on your personal laptop.
-
 ## Backlog (not blocking publication)
 
 - [ ] Memory: report USS, or cgroup `memory.peak` on Linux, alongside RSS (RSS counts mmapped

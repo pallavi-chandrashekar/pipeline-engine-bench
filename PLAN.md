@@ -19,8 +19,8 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 | ~~Spark + Delta (jar resolution, Delta read/write, MERGE)~~ | ~~medium: never executed~~ | ✅ Phase 1 `make smoke`: pass, MERGE 4.8s |
 | ~~Spark's cached Delta jars (`data/.spark_delta_jars.json`)~~ | ~~medium~~ | ✅ 2nd run notes `delta_jars=local`, no Maven re-fetch |
 | ~~DuckDB's native `delta_scan`~~ | ~~low~~ | ✅ Phase 1 notes show `read=delta_scan` |
-| Delta Sharing download (table name, schema, partitioning) | medium: table name and columns are from memory, not a live listing | Phase 2 `make list-share` |
-| NYC TLC downloads for XL | low | Phase 4 |
+| ~~Delta Sharing download (table name, schema, partitioning)~~ | risk hit: share schema has no location IDs | ⚠️ Phase 2 — share unusable, fell back to TLC |
+| ~~NYC TLC downloads~~ | ~~low~~ | ✅ Phase 2: S/M/L built from TLC, 100% rows kept |
 
 ## Phase 1: Local setup and smoke test (~30 min) — ✅ DONE (2026-10-12)
 
@@ -43,21 +43,29 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
   - **`TIMESTAMP_NTZ` errors from Spark** → protocol mismatch between delta-rs and delta-spark; pin
     versions.
 
-## Phase 2: Real data (~1 hr, mostly downloading)
+## Phase 2: Real data — ✅ DONE via TLC (2026-10-12)
 
-- [ ] `make list-share` and confirm:
-  - [ ] `delta_sharing.default.nyctaxi_2019` exists. If not, pick the closest table with
-    `BENCH_SHARE_TABLE=...`, or use `SOURCE=tlc`.
-  - [ ] the column list maps onto `COLUMN_ALIASES` in `bench/config.py`, adding aliases if needed
-  - [ ] the table is unpartitioned (ingest refuses partitioned shares)
-- [ ] `make data-S`. Read the per-file lines: rows kept should be ~99%+, with **no unexpected
-  nulls after cast**.
-- [ ] Sanity check the timezone handling: also build S from TLC and compare row counts and the
-  hour-of-day histogram for 2019-01. They should match closely.
-  ```
-  BENCH_DATA_DIR=data_tlc .venv/bin/python -m bench.ingest prepare --tier S --source tlc
-  ```
-- [ ] `make data-M data-L`
+> **The open share can't feed this pipeline.** `make list-share` shows
+> `delta_sharing.default.nyctaxi_2019` exists (31 files, 1.74 GB, ~84.4M rows) but it is the
+> **old lat/long schema** (`pickup_longitude/latitude`, `dropoff_longitude/latitude`) with **no
+> `PULocationID`/`DOLocationID`**. The silver stage joins trips to the zone lookup on
+> `pu_location_id`/`do_location_id`, so ingest would hard-fail (`no column for 'pu_location_id'`).
+> `nyctaxi_2019_part` is the partitioned variant (ingest refuses it) and has the same columns.
+> **Resolution: built S/M/L from `SOURCE=tlc`**, which uses the location-id schema. Published
+> results therefore say `source: tlc`, not the share.
+
+- [x] `make list-share`: target table found, but schema lacks location IDs (see note above)
+- [x] `make data-S SOURCE=tlc`: 7,696,617/7,696,617 rows kept (100%); only null is `passenger_count`
+  (~0.4%), a column no stage uses — harmless. Validated end-to-end (duckdb+polars, 1 repeat): all
+  stages `pass` against the independent reference.
+- [x] `make data-M SOURCE=tlc`: 22,611,807 rows, 0.50 GB
+- [x] `make data-L SOURCE=tlc`: 84,597,002 rows, 1.87 GB (matches the share's ~84.4M)
+- [n/a] Timezone cross-check (build S from share vs TLC): the share is unusable, so there is
+  nothing to compare against. TLC is the only source.
+
+> **Makefile fix applied:** `data-S/M/L/XL` were listed in `.PHONY`, so GNU Make skipped the
+> `data-%` pattern rule and `make data-S` printed "Nothing to be done". Removed them from `.PHONY`
+> (the pattern rule handles them); the README quick-start commands now work.
 
 ## Phase 3: Benchmark S, M, L (~1–3 hrs)
 

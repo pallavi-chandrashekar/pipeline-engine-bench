@@ -1,0 +1,13 @@
+tier,rows,engine,pipeline_s,pipeline_status,valid_runs,pipeline_peak_mb,merge_s,merge_status,merge_peak_mb,checks
+S,7696080,spark,9.467000000000002,ok,3/3,4636.6,5.459,ok,4354.5,pass
+S,7696080,duckdb,1.5589999999999997,ok,3/3,1583.6,,n/a,,pass
+S,7696080,polars,1.494,ok,3/3,2435.4,0.955,ok,1430.2,pass
+S,7696080,delta-rs,1.5439999999999998,ok,3/3,2626.8,0.946,ok,1368.1,pass
+M,22611807,spark,12.770000000000001,ok,3/3,4888.3,9.49,ok,4843.6,pass
+M,22611807,duckdb,2.5180000000000002,ok,3/3,2671.0,,n/a,,pass
+M,22611807,polars,1.973,ok,3/3,6198.1,2.701,ok,2907.5,pass
+M,22611807,delta-rs,2.437,ok,3/3,5201.1,2.68,ok,3020.7,pass
+L,84597002,spark,30.397000000000006,ok,3/3,4997.1,20.266,ok,4879.3,pass
+L,84597002,duckdb,5.227,ok,3/3,4833.3,,n/a,,pass
+L,84597002,polars,5.474,ok,3/3,10970.6,10.27,ok,6982.3,pass
+L,84597002,delta-rs,22.85,ok,3/3,11990.1,10.262,ok,6301.5,pass

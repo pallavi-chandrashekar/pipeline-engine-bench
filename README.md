@@ -9,8 +9,48 @@ over the same local Delta tables, at four data sizes, and records:
 - peak memory of the whole process tree, including the JVM
 - whether each engine got the **right answer**. Every run is checked against a reference computed without any of the benchmarked engines or their SQL. A run that gets the wrong answer doesn't count, however fast it was.
 
-> Status and next steps: [`PLAN.md`](PLAN.md). Results: see [`results/`](results/). Each run folder has a `summary.md`, the raw `runs.csv`,
-> machine/version info in `env.json`, and charts.
+> Status and next steps: [`PLAN.md`](PLAN.md). Headline numbers are in [Results](#results) below;
+> the full per-stage tables, raw `runs.csv`, machine/version `env.json` and charts for every run are
+> under [`results/`](results/).
+
+---
+
+## Results
+
+One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per engine × tier, source
+**NYC TLC** 2019 yellow-taxi data. Full tables and environment:
+[`results/bench-20261012/`](results/bench-20261012/). Your numbers will differ — see
+[Fairness notes](#fairness-notes-read-before-quoting-numbers).
+
+**Pipeline time** — `startup + transform_write + aggregate + top_zones`, median of 3 valid runs:
+
+| Tier | Rows | DuckDB | Polars | delta-rs | Spark |
+|---|---:|---:|---:|---:|---:|
+| S | 7.7M | 1.6s | 1.5s | 1.6s | 10s |
+| M | 22.6M | 2.4s | 2.0s | 2.5s | 15s |
+| L | 84.6M | 5.5s | 5.0s | 22s | 34s |
+
+![Pipeline time by engine and tier](results/bench-20261012/pipeline_time.png)
+
+- **You don't need Spark for ≤ 85M rows on one machine.** DuckDB and Polars finish the whole
+  pipeline in ~5s at L (84.6M rows); Spark takes 34s and never closes the gap at any tier. Much of
+  Spark's cost is fixed (JVM launch + Delta-log read), so it hurts most on the small tiers.
+- **delta-rs scales worst of the three fast engines.** It tracks DuckDB/Polars at S and M, then
+  jumps to 22s at L — "fast at small sizes" didn't extrapolate.
+- **Only 3 of 4 engines can MERGE into Delta.** Spark, delta-rs and Polars can; DuckDB's `delta`
+  extension can INSERT but not MERGE/UPDATE, so its MERGE is `n/a`. Polars delegates its writes and
+  MERGE to delta-rs, so those two share a code path (and near-identical MERGE bars).
+- **Spark's memory number is mostly its heap setting.** At L, Spark peaks at 11.3 GB on the default
+  (60% of RAM) but 4.9 GB under `SPARK_DRIVER_MEMORY=4g` — at the *same* pipeline time. It grows
+  into the heap it's given rather than needing it. The leanest engine at L is DuckDB (4.6 GB).
+
+![Peak memory by engine and tier](results/bench-20261012/peak_memory.png)
+
+Every run above passed its correctness check (`3/3` valid) against an engine-independent reference —
+a fast wrong answer wouldn't have counted. See
+[`summary.md`](results/bench-20261012/summary.md) for the full per-stage breakdown, and the
+[`-spark4g`](results/bench-20261012-spark4g/) / [`-polarsauto`](results/bench-20261012-polarsauto/)
+folders for the constrained-Spark and default-Polars comparison runs.
 
 ---
 
@@ -36,21 +76,26 @@ separately because not every engine can MERGE into Delta (see below).
 
 | Tier | Data | Source |
 |---|---|---|
-| **S** | 1 month of 2019 | open Delta Sharing server |
-| **M** | 3 months of 2019 | open Delta Sharing server |
-| **L** | all of 2019 | open Delta Sharing server |
-| **XL** | 2019 + 2020–2023 | share (2019) + NYC TLC public parquet (2020–2023) |
+| **S** | 1 month of 2019 | NYC TLC public parquet |
+| **M** | 3 months of 2019 | NYC TLC public parquet |
+| **L** | all of 2019 | NYC TLC public parquet |
+| **XL** | 2019 + 2020–2023 | NYC TLC public parquet |
 
-All tiers come from **one table family**, so the pipeline code is identical at every size and only
-the volume changes. Exact row counts are written to `data/tiers/<tier>/manifest.json` at build time
-and appear in every results table.
+All tiers come from the same NYC TLC yellow-taxi parquet family, so the pipeline code is identical at
+every size and only the volume changes. Exact row counts are written to
+`data/tiers/<tier>/manifest.json` at build time and appear in every results table.
 
-**Why download first?** Delta Sharing is a transfer protocol. If engines read through it during the
-benchmark you'd be timing your Wi-Fi, and only Spark has a native sharing connector anyway. So
-`bench.ingest` downloads the shared table once, normalizes it to a canonical schema (timezone-naive
-timestamps, typed ids, a stable `trip_id`), and writes **local Delta tables** that every engine reads.
-Note that the shared table is a single 2019 table, so `make data-S` downloads all of 2019 once;
-M and L then reuse the download.
+**Why local, and why TLC?** Engines read **local Delta tables**, never over the network: Delta
+Sharing is a transfer protocol, so reading through it during the benchmark would time your Wi-Fi,
+and only Spark has a native sharing connector anyway. `bench.ingest` downloads the source once,
+normalizes it to a canonical schema (timezone-naive timestamps, typed ids, a stable `trip_id`), and
+writes the local tables every engine reads.
+
+The tiers here were built from **NYC TLC public parquet** (`SOURCE=tlc`). The project also supports
+the open Delta Sharing server, but its `nyctaxi_2019` table is the old coordinate schema
+(`pickup_longitude/latitude`) with no `PULocationID`/`DOLocationID`, so it can't feed the zone-join
+pipeline — the TLC files carry location ids. Ingest still accepts any unpartitioned shared table
+whose columns map onto `COLUMN_ALIASES` in `bench/config.py`.
 
 Open Delta Sharing server: <https://github.com/delta-io/delta-sharing> (profile:
 `open-datasets.share`). NYC TLC trip records: <https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page>.
@@ -58,7 +103,9 @@ Open Delta Sharing server: <https://github.com/delta-io/delta-sharing> (profile:
 ## Quick start
 
 Requirements: Python 3.10+, **Java 17 or 21** (for Spark), internet access to PyPI and Maven Central
-(Spark downloads the Delta jars on first run).
+(Spark downloads the Delta jars on first run). On macOS with Homebrew's keg-only `openjdk@21`, export
+`JAVA_HOME` before any Spark command (`make smoke`/`bench`/`bench-xl`):
+`export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"`.
 
 ```bash
 git clone https://github.com/pallavi-chandrashekar/pipeline-engine-bench
@@ -67,16 +114,15 @@ make setup          # .venv + dependencies
 make test           # offline tests on synthetic data
 make smoke          # 2M synthetic rows through all 4 engines, incl. Spark + Delta
 
-make list-share     # see what the open Delta Sharing server offers
-make data-S data-M data-L
+make data-S SOURCE=tlc && make data-M SOURCE=tlc && make data-L SOURCE=tlc
 make bench          # S, M, L x 4 engines x 3 repeats
-make data-XL bench-xl
+make data-XL SOURCE=tlc && make bench-xl   # optional XL tier (~40 GB disk)
 ```
 
-If the share is unavailable, build any tier purely from TLC files: `make data-L SOURCE=tlc`.
-Ingest prints, per file, how many rows were kept and any columns that came out NULL after casting.
-Check those lines the first time.
-To use a different shared table: `BENCH_SHARE_TABLE=share.schema.table make data-S`.
+Ingest prints, per file, how many rows were kept and any columns that came out NULL after casting —
+check those lines the first time. To pull from an unpartitioned shared table instead of TLC:
+`make list-share` to see what's offered, then `BENCH_SHARE_TABLE=share.schema.table make data-S`
+(dropping `SOURCE=tlc`); see "Why local, and why TLC?" for why the default open share doesn't fit.
 
 Useful knobs:
 
@@ -133,7 +179,8 @@ These settings are recorded in each run's `env.json` and `summary.md`.
     results.
 - **Spark's memory number mostly reflects its heap setting.** A JVM with a large heap grows into it
   instead of collecting garbage early, so Spark's peak RSS shows what it *used* given 60% of RAM, not
-  the minimum it *needs*. Run with `SPARK_DRIVER_MEMORY=4g` to see how it behaves when constrained.
+  the minimum it *needs*. Constrained to `SPARK_DRIVER_MEMORY=4g` it peaks at 4.9 GB on L at the same
+  pipeline time (see [Results](#results)).
 - **Who writes the Delta files?**
   - **Spark** writes and MERGEs with Delta Lake (JVM).
   - **delta-rs** is the Rust implementation.

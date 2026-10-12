@@ -95,11 +95,14 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 
 ## Phase 5: Publish
 
-- [ ] Replace the README's "Results" pointer with the headline chart + 3–4 bullet findings
-- [ ] Add a short "Findings" section: where Spark becomes competitive (if it does), MERGE
-  support, memory behaviour
-- [ ] Pin the repo on your GitHub profile; add topics: `delta-lake`, `spark`, `duckdb`, `polars`,
-  `benchmark`, `data-engineering`
+- [x] README "Results" section added: pipeline-time table + pipeline/memory charts + findings
+      (Spark not competitive ≤85M rows on one box; delta-rs scales worst of the fast three;
+      3/4 engines MERGE; Spark memory = heap setting). Based on `bench-20261012`.
+- [x] Corrected the now-inaccurate share provenance throughout the README (Data tiers table,
+      "Why local, and why TLC?", Quick start) — published tiers were built from TLC because the
+      open share's `nyctaxi_2019` has no location ids. Added the keg-only `JAVA_HOME` note.
+- [ ] (you) Pin the repo on your GitHub profile; add topics: `delta-lake`, `spark`, `duckdb`,
+  `polars`, `benchmark`, `data-engineering`
 
 ## Phase 6: LinkedIn posts built from the results
 

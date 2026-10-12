@@ -9,7 +9,7 @@ over the same local Delta tables, at four data sizes, and records:
 - peak memory of the whole process tree, including the JVM
 - whether each engine got the **right answer**. Every run is checked against a reference computed without any of the benchmarked engines or their SQL. A run that gets the wrong answer doesn't count, however fast it was.
 
-> Results: see [`results/`](results/). Each run folder has a `summary.md`, the raw `runs.csv`,
+> Status and next steps: [`PLAN.md`](PLAN.md). Results: see [`results/`](results/). Each run folder has a `summary.md`, the raw `runs.csv`,
 > machine/version info in `env.json`, and charts.
 
 ---

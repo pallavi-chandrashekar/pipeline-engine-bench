@@ -96,7 +96,7 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 ## Phase 5: Publish
 
 - [x] README "Results" section added: pipeline-time table + pipeline/memory charts + findings
-      (Spark not competitive ≤85M rows on one box; delta-rs scales worst of the fast three;
+      (Spark not competitive ≤85M rows on one box; delta-rs scales worst of the fast three (query path, not the writer); Spark gap is proportional ~6×;
       3/4 engines MERGE; Spark memory = heap setting). Based on `bench-20261012`.
 - [x] Corrected the now-inaccurate share provenance throughout the README (Data tiers table,
       "Why local, and why TLC?", Quick start) — published tiers were built from TLC because the

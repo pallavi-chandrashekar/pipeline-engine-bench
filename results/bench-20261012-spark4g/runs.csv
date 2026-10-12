@@ -1,0 +1,217 @@
+run_id,tier,rows,engine,rep,stage,status,seconds,peak_rss_mb,verified,detail,notes
+bench-20261012-spark4g,S,7696080,spark,0,startup,ok,3.199,601.0,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,0,transform_write,ok,4.984,4473.9,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,0,aggregate,ok,0.736,4612.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,0,top_zones,ok,0.646,4636.6,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,0,merge,ok,5.53,4379.7,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,0,process,0,9.939,4636.6,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,duckdb,0,startup,ok,0.061,387.8,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,0,transform_write,ok,1.408,1583.6,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,0,aggregate,ok,0.035,993.1,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,0,top_zones,ok,0.054,815.5,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,0,merge,n/a,0.0,81.4,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,0,process,0,1.723,1583.6,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,startup,ok,0.058,791.3,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,transform_write,ok,1.37,2484.0,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,aggregate,ok,0.043,1961.8,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,top_zones,ok,0.042,1961.8,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,merge,ok,0.955,1430.2,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,0,process,0,1.666,2484.0,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,delta-rs,0,startup,ok,0.012,506.4,,,
+bench-20261012-spark4g,S,7696080,delta-rs,0,transform_write,ok,1.345,2755.6,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,0,aggregate,ok,0.154,2121.4,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,0,top_zones,ok,0.033,2121.4,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,0,merge,ok,0.964,1166.4,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,0,process,0,1.739,2755.6,,,
+bench-20261012-spark4g,S,7696080,duckdb,1,startup,ok,0.061,374.4,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,1,transform_write,ok,1.378,1600.9,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,1,aggregate,ok,0.036,1005.9,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,1,top_zones,ok,0.055,1005.9,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,1,merge,n/a,0.0,81.5,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,1,process,0,1.672,1600.9,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,startup,ok,0.054,1755.5,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,transform_write,ok,1.327,2435.4,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,aggregate,ok,0.033,1814.3,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,top_zones,ok,0.034,1814.3,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,merge,ok,0.947,1413.4,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,1,process,0,1.613,2435.4,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,delta-rs,1,startup,ok,0.012,522.6,,,
+bench-20261012-spark4g,S,7696080,delta-rs,1,transform_write,ok,1.342,2392.2,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,1,aggregate,ok,0.154,2041.0,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,1,top_zones,ok,0.033,2041.0,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,1,merge,ok,0.946,1390.1,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,1,process,0,1.724,2392.2,,,
+bench-20261012-spark4g,S,7696080,spark,1,startup,ok,3.229,608.9,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,1,transform_write,ok,4.862,4457.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,1,aggregate,ok,0.768,4552.1,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,1,top_zones,ok,0.64,4615.8,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,1,merge,ok,5.459,4135.4,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,1,process,0,9.948,4615.8,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,polars,2,startup,ok,0.056,1530.1,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,2,transform_write,ok,1.373,2419.6,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,2,aggregate,ok,0.033,1949.1,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,2,top_zones,ok,0.035,1949.1,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,2,merge,ok,0.969,1438.8,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,polars,2,process,0,1.672,2419.6,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,S,7696080,delta-rs,2,startup,ok,0.013,455.8,,,
+bench-20261012-spark4g,S,7696080,delta-rs,2,transform_write,ok,1.371,2626.8,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,2,aggregate,ok,0.158,1981.8,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,2,top_zones,ok,0.033,1981.8,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,2,merge,ok,0.935,1368.1,pass,,
+bench-20261012-spark4g,S,7696080,delta-rs,2,process,0,1.776,2626.8,,,
+bench-20261012-spark4g,S,7696080,spark,2,startup,ok,3.249,602.2,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,2,transform_write,ok,4.658,4648.0,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,2,aggregate,ok,0.727,4704.1,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,2,top_zones,ok,0.625,4830.9,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,2,merge,ok,5.444,4354.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,spark,2,process,0,9.461,4830.9,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,S,7696080,duckdb,2,startup,ok,0.062,376.2,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,2,transform_write,ok,1.425,1575.1,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,2,aggregate,ok,0.035,970.2,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,2,top_zones,ok,0.055,776.0,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,2,merge,n/a,0.0,79.8,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,S,7696080,duckdb,2,process,0,1.724,1575.1,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,spark,0,startup,ok,3.239,617.0,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,0,transform_write,ok,8.09,4847.7,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,0,aggregate,ok,1.02,4878.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,0,top_zones,ok,1.006,4888.4,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,0,merge,ok,9.08,4861.3,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,0,process,0,13.982,4888.4,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,duckdb,0,startup,ok,0.163,82.1,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,0,transform_write,ok,2.176,2671.0,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,0,aggregate,ok,0.075,1356.4,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,0,top_zones,ok,0.117,1356.4,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,0,merge,n/a,0.0,78.5,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,0,process,0,2.671,2671.0,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,startup,ok,0.103,133.4,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,transform_write,ok,1.706,6198.1,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,aggregate,ok,0.091,4448.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,top_zones,ok,0.102,4448.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,merge,ok,2.809,3244.7,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,0,process,0,2.204,6198.1,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,delta-rs,0,startup,ok,0.013,635.4,,,
+bench-20261012-spark4g,M,22611807,delta-rs,0,transform_write,ok,2.162,5201.1,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,0,aggregate,ok,0.174,5163.8,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,0,top_zones,ok,0.083,3147.5,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,0,merge,ok,2.68,3020.7,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,0,process,0,2.66,5201.1,,,
+bench-20261012-spark4g,M,22611807,duckdb,1,startup,ok,0.062,393.2,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,1,transform_write,ok,2.173,2613.2,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,1,aggregate,ok,0.074,1430.1,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,1,top_zones,ok,0.115,1278.2,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,1,merge,n/a,0.0,77.5,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,1,process,0,2.596,2613.2,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,startup,ok,0.056,74.6,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,transform_write,ok,1.644,6212.0,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,aggregate,ok,0.075,4518.0,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,top_zones,ok,0.081,4217.7,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,merge,ok,2.701,2907.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,1,process,0,2.037,6212.0,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,delta-rs,1,startup,ok,0.013,504.5,,,
+bench-20261012-spark4g,M,22611807,delta-rs,1,transform_write,ok,2.179,5281.5,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,1,aggregate,ok,0.169,5271.5,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,1,top_zones,ok,0.082,3247.7,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,1,merge,ok,2.666,2893.7,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,1,process,0,2.64,5281.5,,,
+bench-20261012-spark4g,M,22611807,spark,1,startup,ok,3.416,579.9,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,1,transform_write,ok,7.542,4826.1,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,1,aggregate,ok,1.048,4855.2,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,1,top_zones,ok,0.863,4641.9,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,1,merge,ok,9.645,4843.6,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,1,process,0,13.473,4855.2,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,polars,2,startup,ok,0.104,132.4,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,2,transform_write,ok,1.699,6100.4,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,2,aggregate,ok,0.083,4533.6,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,2,top_zones,ok,0.088,4284.2,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,2,merge,ok,2.691,2821.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,polars,2,process,0,2.148,6100.4,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,M,22611807,delta-rs,2,startup,ok,0.013,486.8,,,
+bench-20261012-spark4g,M,22611807,delta-rs,2,transform_write,ok,2.168,5154.9,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,2,aggregate,ok,0.178,5043.5,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,2,top_zones,ok,0.082,3035.4,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,2,merge,ok,2.703,3189.2,pass,,
+bench-20261012-spark4g,M,22611807,delta-rs,2,process,0,2.642,5154.9,,,
+bench-20261012-spark4g,M,22611807,spark,2,startup,ok,3.255,613.7,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,2,transform_write,ok,7.46,4865.2,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,2,aggregate,ok,1.028,4888.3,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,2,top_zones,ok,0.945,4399.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,2,merge,ok,9.49,4832.3,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,spark,2,process,0,12.982,4888.3,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,M,22611807,duckdb,2,startup,ok,0.155,395.0,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,2,transform_write,ok,1.991,3261.4,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,2,aggregate,ok,0.079,2040.6,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,2,top_zones,ok,0.112,2017.2,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,2,merge,n/a,0.0,81.5,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,M,22611807,duckdb,2,process,0,2.51,3261.4,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,spark,0,startup,ok,3.236,629.2,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,0,transform_write,ok,22.359,4834.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,0,aggregate,ok,2.434,4997.1,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,0,top_zones,ok,1.882,2224.5,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,0,merge,ok,20.251,4875.0,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,0,process,0,30.538,4997.1,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,duckdb,0,startup,ok,0.171,315.8,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,0,transform_write,ok,4.458,4968.1,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,0,aggregate,ok,0.226,2422.3,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,0,top_zones,ok,0.368,2436.2,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,0,merge,n/a,0.0,78.5,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,0,process,0,5.441,4968.1,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,startup,ok,0.111,127.5,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,transform_write,ok,5.614,9481.3,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,aggregate,ok,0.282,5273.8,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,top_zones,ok,0.31,5741.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,merge,ok,10.27,5257.3,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,0,process,0,6.549,9481.3,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,delta-rs,0,startup,ok,0.013,411.2,,,
+bench-20261012-spark4g,L,84597002,delta-rs,0,transform_write,ok,20.158,10100.0,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,0,aggregate,ok,0.304,1554.2,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,0,top_zones,ok,0.259,1554.2,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,0,merge,ok,10.262,6728.8,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,0,process,0,20.954,10100.0,,,
+bench-20261012-spark4g,L,84597002,duckdb,1,startup,ok,0.155,82.0,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,1,transform_write,ok,5.386,3994.8,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,1,aggregate,ok,0.232,2403.0,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,1,top_zones,ok,0.351,2393.4,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,1,merge,n/a,0.0,81.6,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,1,process,0,6.338,3994.8,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,startup,ok,0.114,123.7,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,transform_write,ok,4.72,10970.6,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,aggregate,ok,0.267,5718.6,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,top_zones,ok,0.291,5656.0,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,merge,ok,10.181,7236.9,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,1,process,0,5.639,10970.6,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,delta-rs,1,startup,ok,0.013,445.7,,,
+bench-20261012-spark4g,L,84597002,delta-rs,1,transform_write,ok,22.258,11990.1,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,1,aggregate,ok,0.313,1603.7,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,1,top_zones,ok,0.266,1603.7,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,1,merge,ok,10.232,6255.4,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,1,process,0,23.066,11990.1,,,
+bench-20261012-spark4g,L,84597002,spark,1,startup,ok,4.082,593.1,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,1,transform_write,ok,22.582,4957.2,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,1,aggregate,ok,2.024,4982.7,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,1,top_zones,ok,1.915,4992.0,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,1,merge,ok,20.858,4921.8,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,1,process,0,31.068,4992.0,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,polars,2,startup,ok,0.113,111.0,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,2,transform_write,ok,4.787,11528.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,2,aggregate,ok,0.277,6204.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,2,top_zones,ok,0.297,5767.5,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,2,merge,ok,10.306,6982.3,pass,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,polars,2,process,0,5.75,11528.5,,,polars engine=streaming; write+merge=delta-rs
+bench-20261012-spark4g,L,84597002,delta-rs,2,startup,ok,0.05,575.8,,,
+bench-20261012-spark4g,L,84597002,delta-rs,2,transform_write,ok,22.266,12033.4,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,2,aggregate,ok,0.327,1525.1,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,2,top_zones,ok,0.266,1525.1,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,2,merge,ok,10.384,6301.5,pass,,
+bench-20261012-spark4g,L,84597002,delta-rs,2,process,0,23.154,12033.4,,,
+bench-20261012-spark4g,L,84597002,spark,2,startup,ok,3.96,607.2,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,2,transform_write,ok,21.126,4979.3,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,2,aggregate,ok,2.196,5109.4,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,2,top_zones,ok,1.648,5116.1,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,2,merge,ok,20.266,4879.3,pass,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,spark,2,process,0,29.6,5116.1,,,driver_memory=4g; delta_jars=local
+bench-20261012-spark4g,L,84597002,duckdb,2,startup,ok,0.17,274.2,,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,2,transform_write,ok,4.39,4833.3,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,2,aggregate,ok,0.231,2538.9,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,2,top_zones,ok,0.372,2463.4,pass,,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,2,merge,n/a,0.0,81.4,,DuckDB cannot MERGE/UPDATE a Delta table,read=delta_scan; write=delta-rs
+bench-20261012-spark4g,L,84597002,duckdb,2,process,0,5.374,4833.3,,,read=delta_scan; write=delta-rs

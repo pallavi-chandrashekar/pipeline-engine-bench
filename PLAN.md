@@ -67,18 +67,24 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 > `data-%` pattern rule and `make data-S` printed "Nothing to be done". Removed them from `.PHONY`
 > (the pattern rule handles them); the README quick-start commands now work.
 
-## Phase 3: Benchmark S, M, L (~1–3 hrs)
+## Phase 3: Benchmark S, M, L — ✅ DONE (2026-10-12)
 
-- [ ] Close heavy apps, plug in power, and don't let the laptop sleep
-  (`caffeinate -dims make bench` on macOS)
-- [ ] `make bench` (3 repeats)
-- [ ] Review `summary.md`. Every row should be `3/3` valid; investigate anything that isn't before
-  quoting numbers.
-- [ ] Optional comparison runs, each with its own `--run-id`:
-  - [ ] `SPARK_DRIVER_MEMORY=4g`: how Spark behaves when constrained (answers the "the heap setting
-    inflates Spark's memory" objection)
-  - [ ] `POLARS_ENGINE=auto`: Polars' default engine
-- [ ] Commit `results/<run_id>/`. The work dirs are gitignored.
+- [x] `caffeinate -dims` used to keep the laptop awake during the runs
+- [x] Main run `bench-20261012` (3 repeats): **every row 3/3 valid, all checks pass**. Only
+  non-runs are DuckDB MERGE (`n/a`, expected). Headline medians:
+  - S (7.7M): duckdb 1.6s / polars 1.5s / delta-rs 1.6s / spark 10s
+  - M (22.6M): duckdb 2.4s / polars 2.0s / delta-rs 2.5s / spark 15s
+  - L (84.6M): duckdb 5.5s / polars 5.0s / delta-rs 22s / spark 34s
+  - Spark never becomes competitive at one-machine sizes; at L delta-rs slows to ~Spark territory.
+- [x] Comparison runs, each own `--run-id`, all 3/3 pass:
+  - [x] `bench-20261012-spark4g` (`SPARK_DRIVER_MEMORY=4g`): Spark peak RSS at L drops **11.3 GB → 4.9 GB**
+    (M 7.3 → 4.8) with pipeline time essentially unchanged (L 34s → 30s). Confirms Spark's memory
+    number mostly reflects its heap setting, not what it needs — the "memory post" result.
+  - [x] `bench-20261012-polarsauto` (`POLARS_ENGINE=auto`): ~indistinguishable from streaming at these
+    sizes (L polars 10.8 → 10.5 GB, times within noise). Streaming buys little until data > RAM.
+- [x] Committed `results/bench-20261012{,-spark4g,-polarsauto}/` (work dirs gitignored).
+
+> Machine: macOS, 14 cores, 24 GB RAM, OpenJDK 21. Full env in each run's `env.json`.
 
 ## Phase 4: XL (optional, a long run)
 

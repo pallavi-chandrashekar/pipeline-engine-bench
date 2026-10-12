@@ -133,7 +133,7 @@ def test_share_download_path(monkeypatch, tmp_path):
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     port = httpd.server_address[1]
 
-    files = [SimpleNamespace(id=n, url=f"http://127.0.0.1:{port}/{n}.parquet", size=(serve / f"{n}.parquet").stat().st_size)
+    files = [SimpleNamespace(id=n, partition_values={}, url=f"http://127.0.0.1:{port}/{n}.parquet", size=(serve / f"{n}.parquet").stat().st_size)
              for n in ("f2", "f1")]
     rest = SimpleNamespace(list_files_in_table=lambda table: SimpleNamespace(add_files=files))
     monkeypatch.setattr(ingest, "_share_client", lambda: (None, rest))
@@ -144,3 +144,51 @@ def test_share_download_path(monkeypatch, tmp_path):
         httpd.shutdown()
     assert [p.name for p in got] == ["00000.parquet", "00001.parquet"]
     assert pq.read_metadata(got[0]).num_rows == 300  # sorted by file id: f1 first
+
+
+def test_reference_catches_a_bug_in_the_shared_sql(tmp_path, monkeypatch):
+    """The reference must not share the engines' SQL: a wrong query has to FAIL."""
+    from bench import workload as W
+    from bench.engines.duckdb_engine import DuckDBEngine
+
+    synth.main(["--rows", "50000", "--tier", "SQLBUG"])
+    p = C.table_paths("SQLBUG")
+    ref = verify.Reference("SQLBUG")
+    eng = DuckDBEngine()
+    eng.start()
+    eng.register(str(p["trips"]), str(p["zones"]))
+    eng.transform_write(str(tmp_path / "silver"))
+    eng.register_silver(str(tmp_path / "silver"))
+    assert verify.compare_tables(ref.aggregate, eng.aggregate(), W.RESULT_KEYS["aggregate"]) == "pass"
+    assert verify.compare_tables(ref.silver, verify.silver_summary(tmp_path / "silver"), W.SILVER_CHECK_KEYS) == "pass"
+
+    monkeypatch.setattr(W, "AGGREGATE_SQL", W.AGGREGATE_SQL.replace("SUM(total_amount)", "SUM(fare_amount)"))
+    assert verify.compare_tables(ref.aggregate, eng.aggregate(), W.RESULT_KEYS["aggregate"]).startswith("FAIL")
+
+
+def test_report_excludes_wrong_answers_and_labels_failures(tmp_path):
+    from bench import report
+
+    rows = []
+    def add(engine, rep, stage, status="ok", seconds=1.0, verified="", peak=100.0, detail=""):
+        rows.append(dict(run_id="r", tier="S", rows=1000, engine=engine, rep=rep, stage=stage, status=status,
+                         seconds=seconds, peak_rss_mb=peak, verified=verified, detail=detail, notes=""))
+    for rep in range(2):
+        for e in ("duckdb", "polars"):
+            add(e, rep, "startup")
+            add(e, rep, "transform_write", verified="pass")
+            add(e, rep, "aggregate", verified="pass" if (e, rep) != ("polars", 1) else "FAIL: column revenue differs",
+                seconds=0.1 if e == "polars" else 1.0)
+            add(e, rep, "top_zones", verified="pass")
+        add("spark", rep, "startup", status="timeout", seconds="", peak="")
+        for st in ("transform_write", "aggregate", "top_zones"):
+            add("spark", rep, st, status="timeout", seconds="", peak="")
+    pd = __import__("pandas")
+    pd.DataFrame(rows).to_csv(tmp_path / "runs.csv", index=False)
+    report.build(tmp_path)
+    t = pd.read_csv(tmp_path / "totals.csv", keep_default_na=False).set_index("engine")
+    assert t.loc["polars", "valid_runs"] == "1/2"         # the wrong-answer run doesn't count
+    assert float(t.loc["polars", "pipeline_s"]) == 1 + 1 + 0.1 + 1
+    assert t.loc["polars", "checks"] == "FAIL"
+    assert t.loc["spark", "pipeline_status"] == "timeout"
+    assert t.loc["spark", "checks"] == "-"                # nothing ran, so nothing passed

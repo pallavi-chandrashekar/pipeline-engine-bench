@@ -38,17 +38,28 @@ STAGING = C.DATA_DIR / "staging"
 # --------------------------------------------------------------------------- download
 
 
-def _download(url: str, dest: Path, expected_size: int | None = None) -> None:
+def _download(url: str, dest: Path, expected_size: int | None = None, attempts: int = 5) -> None:
     if dest.exists() and (expected_size is None or dest.stat().st_size == expected_size):
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
-    with requests.get(url, stream=True, timeout=120) as r:
-        r.raise_for_status()
-        with open(tmp, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8 << 20):
-                f.write(chunk)
-    tmp.rename(dest)
+    for attempt in range(1, attempts + 1):
+        try:
+            with requests.get(url, stream=True, timeout=120) as r:
+                r.raise_for_status()
+                with open(tmp, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8 << 20):
+                        f.write(chunk)
+            if expected_size is not None and tmp.stat().st_size != expected_size:
+                raise requests.ConnectionError(f"short read: {tmp.stat().st_size} of {expected_size} bytes")
+            tmp.rename(dest)
+            return
+        except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError) as e:
+            if attempt == attempts:
+                raise
+            wait = 2 ** attempt
+            print(f"    retry {attempt}/{attempts - 1} in {wait}s ({e})", flush=True)
+            time.sleep(wait)
 
 
 def _share_client():
@@ -94,6 +105,10 @@ def cmd_list() -> None:
 def download_share() -> list[Path]:
     _, rest = _share_client()
     files = sorted(rest.list_files_in_table(_share_table()).add_files, key=lambda f: f.id)
+    if any(f.partition_values for f in files):
+        # partition columns are not stored inside the data files; normalization would lose them
+        raise SystemExit(f"{C.SHARE_TABLE} is partitioned; partitioned shared tables aren't supported yet. "
+                         "Use an unpartitioned table or --source tlc.")
     out = []
     print(f"share: {len(files)} files")
     for i, f in enumerate(files):
@@ -149,7 +164,9 @@ def _normalize_select(con, path: Path, file_index: int) -> str:
             "double": "DOUBLE",
             "timestamp[us]": "TIMESTAMP",
         }[str(field.type)]
-        exprs.append(f'CAST("{src}" AS {sql_type}) AS {field.name}')
+        # TRY_CAST: an unexpected encoding (e.g. payment_type 'CRD') becomes NULL instead of
+        # aborting ingest; null counts are reported after staging
+        exprs.append(f'TRY_CAST("{src}" AS {sql_type}) AS {field.name}')
     return (
         f"SELECT {', '.join(exprs)} FROM read_parquet('{path}', file_row_number=true)"
     )
@@ -161,13 +178,29 @@ def stage(source: str, files: list[Path], index_of) -> list[Path]:
     out = []
     for f in files:
         dest = STAGING / source / f.name
-        if not dest.exists():
+        stamp = dest.with_suffix(".src")  # cache key: the raw file's size + mtime
+        sig = f"{f.stat().st_size}:{int(f.stat().st_mtime)}:{C.SHARE_TABLE if source == 'share' else ''}"
+        if not (dest.exists() and stamp.exists() and stamp.read_text() == sig):
             dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_suffix(".parquet.part")
             sql = _normalize_select(con, f, index_of(f))
             con.execute(
                 f"COPY ({sql} WHERE pickup_ts IS NOT NULL AND pu_location_id IS NOT NULL) "
-                f"TO '{dest}' (FORMAT parquet, COMPRESSION zstd)"
+                f"TO '{tmp}' (FORMAT parquet, COMPRESSION zstd)"
             )
+            tmp.rename(dest)
+            stamp.write_text(sig)
+            raw_rows = con.execute(f"SELECT count(*) FROM read_parquet('{f}')").fetchone()[0]
+            nulls = con.execute(
+                "SELECT " + ", ".join(f"count(*) - count({c.name})" for c in C.TRIP_SCHEMA)
+                + f", count(*) FROM read_parquet('{dest}')"
+            ).fetchone()
+            kept = nulls[-1]
+            null_cols = {c.name: n for c, n in zip(C.TRIP_SCHEMA, nulls[:-1]) if n}
+            msg = f"    staged {f.name}: {kept:,}/{raw_rows:,} rows kept"
+            if null_cols:
+                msg += f"; nulls after cast: {null_cols}"
+            print(msg, flush=True)
         out.append(dest)
     return out
 
@@ -185,6 +218,7 @@ def _month_filter(month_list: list[str] | None) -> str:
 def build_tier(tier: str, parts: list[tuple[list[Path], list[str] | None]], zones_csv: Path, meta: dict) -> dict:
     """parts: [(staged files, months to keep or None for all)]"""
     paths = C.table_paths(tier)
+    (C.tier_dir(tier) / "manifest.json").unlink(missing_ok=True)  # a failed rebuild must not look prepared
     for p in paths.values():
         if p.exists():
             shutil.rmtree(p)

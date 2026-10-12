@@ -1,11 +1,13 @@
 """The pipeline every engine runs. Spark, DuckDB and delta-rs (DataFusion) execute the
 exact same SQL text below; Polars implements the same logic with its expression API.
 
-Stages
-  transform_write  bronze -> silver: clean, enrich with zones (2 joins), write a Delta
-                   table partitioned by year/month
-  aggregate        revenue by pickup borough x year x month x hour
-  top_zones        top 10 pickup zones per borough by revenue (window function)
+Stages (bronze -> silver -> gold)
+  transform_write  bronze -> silver: clean, enrich with pickup/dropoff borough (2 joins),
+                   write a Delta table partitioned by year/month
+  aggregate        gold, read from the engine's OWN silver output: revenue by pickup
+                   borough x year x month x hour
+  top_zones        gold, from silver + zones: top 10 pickup zones per borough by revenue
+                   (window function)
   merge            upsert a corrections batch (scattered updates + new trips) into a
                    fresh copy of the bronze table
 """
@@ -29,34 +31,29 @@ WHERE t.trip_distance > 0
 
 AGGREGATE_SQL = """
 SELECT
-    z.borough AS borough,
-    CAST(EXTRACT(YEAR FROM t.pickup_ts) AS INT) AS year,
-    CAST(EXTRACT(MONTH FROM t.pickup_ts) AS INT) AS month,
-    CAST(EXTRACT(HOUR FROM t.pickup_ts) AS INT) AS hour,
+    pu_borough AS borough,
+    year,
+    month,
+    CAST(EXTRACT(HOUR FROM pickup_ts) AS INT) AS hour,
     COUNT(*) AS trips,
-    SUM(t.total_amount) AS revenue,
-    AVG(t.trip_distance) AS avg_distance
-FROM trips t
-JOIN zones z ON t.pu_location_id = z.location_id
-GROUP BY
-    z.borough,
-    CAST(EXTRACT(YEAR FROM t.pickup_ts) AS INT),
-    CAST(EXTRACT(MONTH FROM t.pickup_ts) AS INT),
-    CAST(EXTRACT(HOUR FROM t.pickup_ts) AS INT)
+    SUM(total_amount) AS revenue,
+    AVG(trip_distance) AS avg_distance
+FROM silver
+GROUP BY pu_borough, year, month, CAST(EXTRACT(HOUR FROM pickup_ts) AS INT)
 """
 
 TOP_ZONES_SQL = """
 WITH zr AS (
     SELECT
-        z.borough AS borough,
+        s.pu_borough AS borough,
         z.zone AS zone,
-        t.pu_location_id AS location_id,
+        s.pu_location_id AS location_id,
         COUNT(*) AS trips,
-        SUM(t.total_amount) AS revenue,
-        AVG(CASE WHEN t.fare_amount > 0 THEN t.tip_amount / t.fare_amount END) AS avg_tip_ratio
-    FROM trips t
-    JOIN zones z ON t.pu_location_id = z.location_id
-    GROUP BY z.borough, z.zone, t.pu_location_id
+        SUM(s.total_amount) AS revenue,
+        AVG(CASE WHEN s.fare_amount > 0 THEN s.tip_amount / s.fare_amount END) AS avg_tip_ratio
+    FROM silver s
+    JOIN zones z ON s.pu_location_id = z.location_id
+    GROUP BY s.pu_borough, z.zone, s.pu_location_id
 ),
 ranked AS (
     SELECT
@@ -79,6 +76,8 @@ MERGE_UPDATE_COLS = ["tip_amount", "total_amount"]
 SILVER_PARTITIONS = ["year", "month"]
 
 # Result keys used to compare engines' outputs.
+SILVER_CHECK_KEYS = ["year", "month", "pu_borough", "do_borough"]
+
 RESULT_KEYS = {
     "aggregate": ["borough", "year", "month", "hour"],
     "top_zones": ["borough", "rnk"],

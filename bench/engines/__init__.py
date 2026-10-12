@@ -3,6 +3,7 @@
     start()                                   create the session / connection
     register(trips_path, zones_path)          point the engine at the bronze tables
     transform_write(out_path)                 run SILVER_SQL and write a Delta table
+    register_silver(silver_path)              point the gold queries at that output
     aggregate() -> pyarrow.Table
     top_zones() -> pyarrow.Table
     merge(target_path, corrections_path)      upsert; return a note string, or raise
@@ -11,6 +12,7 @@
 """
 
 ENGINES = ["spark", "duckdb", "polars", "delta-rs"]
+MERGE_CAPABLE = {"spark", "polars", "delta-rs"}  # DuckDB cannot MERGE into Delta
 
 
 class NotSupported(Exception):

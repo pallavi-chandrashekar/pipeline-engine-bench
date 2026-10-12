@@ -1,5 +1,5 @@
-from deltalake import DeltaTable, QueryBuilder, write_deltalake
 import pyarrow as pa
+from deltalake import DeltaTable, QueryBuilder, write_deltalake
 
 from bench import workload as W
 
@@ -18,6 +18,9 @@ class DeltaRsEngine:
 
     def transform_write(self, out_path):
         write_deltalake(out_path, self.qb.execute(W.SILVER_SQL), mode="overwrite", partition_by=W.SILVER_PARTITIONS)
+
+    def register_silver(self, silver_path):
+        self.qb.register("silver", DeltaTable(silver_path))
 
     def aggregate(self):
         return pa.table(self.qb.execute(W.AGGREGATE_SQL))

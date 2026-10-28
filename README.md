@@ -17,7 +17,7 @@ back at the largest size. The numbers, caveats and a few surprises are below.
 
 ## Results
 
-One run on a MacBook (macOS, 14 cores, 24 GB RAM), 3 repeats per engine × tier, source
+One run on the same machine (macOS, 14 cores, 24 GB RAM), 3 repeats per engine × tier, source
 **NYC TLC** yellow-taxi data (2019 for S/M/L; 2019–2023 for XL). Spark is shown at two versions —
 **4.0.1** (on Java 21) and **3.5.3** (on Java 17). Full tables and environment under
 [`results/`](results/). Your numbers will differ — see

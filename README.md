@@ -31,7 +31,7 @@ differ — see [Fairness notes](#fairness-notes-read-before-quoting-numbers).
 | L | 84.6M | 5.5s | 5.0s | 22s | 34s |
 | XL | 218.1M | 13s | 16s | **792s** | 63s |
 
-![Pipeline time by engine and tier (S/M/L)](results/bench-20261012/pipeline_time.png)
+![Pipeline time by engine and tier](results/bench-20261012-all/pipeline_time.png)
 
 - **You don't need Spark on one machine, even at 218M rows.** DuckDB and Polars finish the whole
   pipeline in ~5s at L (84.6M rows) and ~13–16s at XL (218M); Spark takes 34s and 63s. DuckDB/Polars
@@ -54,7 +54,7 @@ differ — see [Fairness notes](#fairness-notes-read-before-quoting-numbers).
   into the heap it's given rather than needing it. Nothing is OOM-killed even at XL (macOS swaps
   instead): there Spark peaks at 12.0 GB, delta-rs 11.0, polars 9.2, and DuckDB stays leanest (5.7 GB).
 
-![Peak memory by engine and tier (S/M/L)](results/bench-20261012/peak_memory.png)
+![Peak memory by engine and tier](results/bench-20261012-all/peak_memory.png)
 
 Every run above passed its correctness check (`3/3` valid) against an engine-independent reference —
 a fast wrong answer wouldn't have counted. See

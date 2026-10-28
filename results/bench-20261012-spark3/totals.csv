@@ -1,0 +1,5 @@
+tier,rows,engine,pipeline_s,pipeline_status,valid_runs,pipeline_peak_mb,merge_s,merge_status,merge_peak_mb,checks
+S,7696080,spark,9.289,ok,3/3,4764.7,5.886,ok,4172.7,pass
+M,22611807,spark,13.228,ok,3/3,7227.3,9.639,ok,5738.3,pass
+L,84597002,spark,40.863,ok,3/3,10327.8,21.808,ok,7342.7,pass
+XL,218116121,spark,79.949,ok,3/3,10719.4,43.596,ok,7176.6,pass

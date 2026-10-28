@@ -17,19 +17,20 @@ back at the largest size. The numbers, caveats and a few surprises are below.
 
 ## Results
 
-One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per engine × tier, source
-**NYC TLC** yellow-taxi data (2019 for S/M/L; 2019–2023 for XL). Full tables and environment under
+One run on a MacBook (macOS, 14 cores, 24 GB RAM), 3 repeats per engine × tier, source
+**NYC TLC** yellow-taxi data (2019 for S/M/L; 2019–2023 for XL). Spark is shown at two versions —
+**4.0.1** (on Java 21) and **3.5.3** (on Java 17). Full tables and environment under
 [`results/`](results/). Your numbers will differ — see
 [Fairness notes](docs/method.md#fairness-notes-read-before-quoting-numbers).
 
 **Pipeline time** — `startup + transform_write + aggregate + top_zones`, median of 3 valid runs:
 
-| Tier | Rows | DuckDB | Polars | delta-rs | Spark |
-|---|---:|---:|---:|---:|---:|
-| S | 7.7M | 1.6s | 1.5s | 1.6s | 10s |
-| M | 22.6M | 2.4s | 2.0s | 2.5s | 15s |
-| L | 84.6M | 5.5s | 5.0s | 22s | 34s |
-| XL | 218.1M | 13s | 16s | **792s** | 63s |
+| Tier | Rows | DuckDB | Polars | delta-rs | Spark 4 | Spark 3 |
+|---|---:|---:|---:|---:|---:|---:|
+| S | 7.7M | 1.6s | 1.5s | 1.6s | 10s | 9.3s |
+| M | 22.6M | 2.4s | 2.0s | 2.5s | 15s | 13s |
+| L | 84.6M | 5.5s | 5.0s | 22s | 34s | 41s |
+| XL | 218.1M | 13s | 16s | **792s** | 63s | 80s |
 
 ![Pipeline time by engine and tier](results/bench-20261012-all/pipeline_time.png)
 
@@ -40,6 +41,11 @@ One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per eng
   DuckDB through L — not startup-dominated (startup is only ~3s of Spark's 10s at S), just a higher
   per-row cost. Only at XL does the ratio fall, to 4.9×, the first sign Spark's fixed costs amortize.
   The crossover where Spark pays off sits beyond one machine, not within the sizes most jobs hit.
+  (The Spark figures above are Spark 4.0.1.)
+- **Spark 4 beats Spark 3 only at scale.** On the small tiers the two are within noise — Spark 3 is
+  even a hair faster (S 9.3s vs 10s, M 13s vs 15s) — but Spark 4's engine work pays off as data
+  grows: ~17% faster at L (34s vs 41s) and ~21% at XL (63s vs 80s). Neither version comes close to
+  DuckDB or Polars on one machine, so the version choice doesn't change the headline.
 - **delta-rs scales worst of the fast engines — and the cause is its query path, not Delta writes.**
   It tracks DuckDB/Polars at S and M, then jumps to 22s at L and **792s at XL** (~60× slower than
   DuckDB), almost all of it in `transform_write`. DuckDB writes its silver table through the *same*
@@ -58,9 +64,9 @@ One run on a MacBook (macOS, 14 cores, 24 GB RAM, OpenJDK 21), 3 repeats per eng
 Every run above passed its correctness check (`3/3` valid) against an engine-independent reference —
 a fast wrong answer wouldn't have counted. See
 [`bench-20261012-all/summary.md`](results/bench-20261012-all/summary.md) for the full per-stage
-breakdown of all four tiers, and the [`-spark4g`](results/bench-20261012-spark4g/) /
-[`-polarsauto`](results/bench-20261012-polarsauto/) folders for the constrained-Spark and
-default-Polars comparison runs.
+breakdown of all four tiers, and the [`-spark3`](results/bench-20261012-spark3/) /
+[`-spark4g`](results/bench-20261012-spark4g/) / [`-polarsauto`](results/bench-20261012-polarsauto/)
+folders for the Spark 3, constrained-Spark and default-Polars comparison runs.
 
 ---
 

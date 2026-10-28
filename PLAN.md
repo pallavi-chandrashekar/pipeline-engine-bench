@@ -109,7 +109,7 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 - [ ] (you) Pin the repo on your GitHub profile; add topics: `delta-lake`, `spark`, `duckdb`,
   `polars`, `benchmark`, `data-engineering`
 
-## Spark 3 vs Spark 4 comparison — in progress (2026-10-28)
+## Spark 3 vs Spark 4 comparison
 
 Does Spark 4's engine close any of the one-machine gap vs Spark 3? Spark 3 and Spark 4 **cannot
 share a venv** (conflicting `pyspark` / `delta-spark`), so this runs as a separate environment, not
@@ -124,8 +124,10 @@ a fifth engine in the code.
   delta-spark 4.0 jar paths; loading those into Spark 3.5 breaks it. Restore the Spark 4 cache after.
 - [x] Run: `JAVA_HOME=<17> .venv-spark3/bin/python -m bench.harness --engines spark
   --tiers S,M,L,XL --repeats 3 --run-id bench-20261012-spark3`.
-- [ ] Relabel `spark`→`spark4` (existing runs) / `spark3` (new run) and regenerate the combined
-  charts so Spark 3 shows as a fifth bar; add a Spark 3 vs 4 row to the README Results table.
+- [x] Relabel `spark`→`spark4` (existing runs) / `spark3` (new run) in `results/bench-20261012-all`
+  and regenerate: Spark 3 now shows as a fifth bar (light blue). Added a Spark 3 column + finding to
+  the README Results. **Result:** Spark 3 edges Spark 4 at S/M (within noise), Spark 4 is ~17% faster
+  at L and ~21% at XL — its engine work pays off at scale; neither nears DuckDB/Polars on one machine.
 
 ## Backlog (not blocking publication)
 

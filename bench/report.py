@@ -225,7 +225,7 @@ def build(run_dir: Path) -> None:
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n")
 
     small_multiples(totals, "pipeline_s", "pipeline_status",
-                    "Same Delta pipeline, four engines, one machine",
+                    "Same Delta pipeline, every engine, one machine",
                     "pipeline time in seconds (startup + transform & write + 2 queries; lower is better)",
                     _fmt_s, run_dir / "pipeline_time.png")
     small_multiples(totals, "pipeline_peak_mb", "pipeline_status", "Peak memory during the pipeline",

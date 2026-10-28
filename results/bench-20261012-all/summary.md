@@ -11,19 +11,23 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 
 | Tier | Rows | Engine | Pipeline | Valid runs | Peak memory | MERGE | MERGE peak | Checks |
 |---|---:|---|---:|---:|---:|---:|---:|---|
-| S | 7,696,080 | spark | 10s | 3/3 | 4.2 GB | 5.88s | 4.4 GB | pass |
+| S | 7,696,080 | spark4 | 10s | 3/3 | 4.2 GB | 5.88s | 4.4 GB | pass |
+| S | 7,696,080 | spark3 | 9.29s | 3/3 | 4.7 GB | 5.89s | 4.1 GB | pass |
 | S | 7,696,080 | duckdb | 1.64s | 3/3 | 1.6 GB | n/a | - | pass |
 | S | 7,696,080 | polars | 1.53s | 3/3 | 2.4 GB | 0.94s | 1.4 GB | pass |
 | S | 7,696,080 | delta-rs | 1.56s | 3/3 | 2.5 GB | 0.92s | 1.4 GB | pass |
-| M | 22,611,807 | spark | 15s | 3/3 | 7.3 GB | 9.43s | 6.3 GB | pass |
+| M | 22,611,807 | spark4 | 15s | 3/3 | 7.3 GB | 9.43s | 6.3 GB | pass |
+| M | 22,611,807 | spark3 | 13s | 3/3 | 7.1 GB | 9.64s | 5.6 GB | pass |
 | M | 22,611,807 | duckdb | 2.37s | 3/3 | 2.8 GB | n/a | - | pass |
 | M | 22,611,807 | polars | 1.99s | 3/3 | 6.0 GB | 2.73s | 2.9 GB | pass |
 | M | 22,611,807 | delta-rs | 2.49s | 3/3 | 5.1 GB | 2.68s | 3.1 GB | pass |
-| L | 84,597,002 | spark | 34s | 3/3 | 11.3 GB | 20s | 8.1 GB | pass |
+| L | 84,597,002 | spark4 | 34s | 3/3 | 11.3 GB | 20s | 8.1 GB | pass |
+| L | 84,597,002 | spark3 | 41s | 3/3 | 10.1 GB | 22s | 7.2 GB | pass |
 | L | 84,597,002 | duckdb | 5.46s | 3/3 | 4.6 GB | n/a | - | pass |
 | L | 84,597,002 | polars | 5.02s | 3/3 | 10.8 GB | 10s | 6.9 GB | pass |
 | L | 84,597,002 | delta-rs | 22s | 3/3 | 11.6 GB | 10s | 6.5 GB | pass |
-| XL | 218,116,121 | spark | 63s | 3/3 | 12.0 GB | 40s | 7.6 GB | pass |
+| XL | 218,116,121 | spark4 | 63s | 3/3 | 12.0 GB | 40s | 7.6 GB | pass |
+| XL | 218,116,121 | spark3 | 80s | 3/3 | 10.5 GB | 44s | 7.0 GB | pass |
 | XL | 218,116,121 | duckdb | 13s | 3/3 | 5.7 GB | n/a | - | pass |
 | XL | 218,116,121 | polars | 16s | 3/3 | 9.2 GB | 27s | 8.4 GB | pass |
 | XL | 218,116,121 | delta-rs | 792s | 3/3 | 11.0 GB | 27s | 8.7 GB | pass |
@@ -32,11 +36,16 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 
 | Tier | Engine | Stage | Median | Min | Valid/total | Peak memory | Check |
 |---|---|---|---:|---:|---:|---:|---|
-| S | spark | startup | 3.22s | 3.18s | 3/3 | 637 MB | - |
-| S | spark | transform_write | 5.64s | 5.62s | 3/3 | 4.2 GB | pass |
-| S | spark | aggregate | 0.85s | 0.82s | 3/3 | 4.2 GB | pass |
-| S | spark | top_zones | 0.68s | 0.68s | 3/3 | 4.2 GB | pass |
-| S | spark | merge | 5.88s | 5.59s | 3/3 | 4.4 GB | pass |
+| S | spark4 | startup | 3.22s | 3.18s | 3/3 | 637 MB | - |
+| S | spark4 | transform_write | 5.64s | 5.62s | 3/3 | 4.2 GB | pass |
+| S | spark4 | aggregate | 0.85s | 0.82s | 3/3 | 4.2 GB | pass |
+| S | spark4 | top_zones | 0.68s | 0.68s | 3/3 | 4.2 GB | pass |
+| S | spark4 | merge | 5.88s | 5.59s | 3/3 | 4.4 GB | pass |
+| S | spark3 | startup | 2.91s | 2.90s | 3/3 | 538 MB | - |
+| S | spark3 | transform_write | 4.70s | 4.66s | 3/3 | 4.5 GB | pass |
+| S | spark3 | aggregate | 0.98s | 0.94s | 3/3 | 4.6 GB | pass |
+| S | spark3 | top_zones | 0.69s | 0.66s | 3/3 | 4.7 GB | pass |
+| S | spark3 | merge | 5.89s | 5.47s | 3/3 | 4.1 GB | pass |
 | S | duckdb | startup | 0.17s | 0.06s | 3/3 | 363 MB | - |
 | S | duckdb | transform_write | 1.38s | 1.33s | 3/3 | 1.6 GB | pass |
 | S | duckdb | aggregate | 0.04s | 0.04s | 3/3 | 1005 MB | pass |
@@ -52,11 +61,16 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 | S | delta-rs | aggregate | 0.16s | 0.15s | 3/3 | 2.0 GB | pass |
 | S | delta-rs | top_zones | 0.03s | 0.03s | 3/3 | 2.0 GB | pass |
 | S | delta-rs | merge | 0.92s | 0.92s | 3/3 | 1.4 GB | pass |
-| M | spark | startup | 3.38s | 3.26s | 3/3 | 628 MB | - |
-| M | spark | transform_write | 8.95s | 8.90s | 3/3 | 7.3 GB | pass |
-| M | spark | aggregate | 1.21s | 1.06s | 3/3 | 5.4 GB | pass |
-| M | spark | top_zones | 1.08s | 1.01s | 3/3 | 6.0 GB | pass |
-| M | spark | merge | 9.43s | 9.01s | 3/3 | 6.3 GB | pass |
+| M | spark4 | startup | 3.38s | 3.26s | 3/3 | 628 MB | - |
+| M | spark4 | transform_write | 8.95s | 8.90s | 3/3 | 7.3 GB | pass |
+| M | spark4 | aggregate | 1.21s | 1.06s | 3/3 | 5.4 GB | pass |
+| M | spark4 | top_zones | 1.08s | 1.01s | 3/3 | 6.0 GB | pass |
+| M | spark4 | merge | 9.43s | 9.01s | 3/3 | 6.3 GB | pass |
+| M | spark3 | startup | 2.88s | 2.83s | 3/3 | 536 MB | - |
+| M | spark3 | transform_write | 7.53s | 7.29s | 3/3 | 7.1 GB | pass |
+| M | spark3 | aggregate | 1.45s | 1.26s | 3/3 | 5.6 GB | pass |
+| M | spark3 | top_zones | 1.37s | 0.94s | 3/3 | 5.5 GB | pass |
+| M | spark3 | merge | 9.64s | 9.02s | 3/3 | 5.6 GB | pass |
 | M | duckdb | startup | 0.16s | 0.07s | 3/3 | 357 MB | - |
 | M | duckdb | transform_write | 2.01s | 1.94s | 3/3 | 2.8 GB | pass |
 | M | duckdb | aggregate | 0.08s | 0.07s | 3/3 | 1.5 GB | pass |
@@ -72,11 +86,16 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 | M | delta-rs | aggregate | 0.20s | 0.17s | 3/3 | 5.1 GB | pass |
 | M | delta-rs | top_zones | 0.08s | 0.08s | 3/3 | 2.9 GB | pass |
 | M | delta-rs | merge | 2.68s | 2.63s | 3/3 | 3.1 GB | pass |
-| L | spark | startup | 4.00s | 3.31s | 3/3 | 634 MB | - |
-| L | spark | transform_write | 25s | 23s | 3/3 | 11.3 GB | pass |
-| L | spark | aggregate | 2.81s | 2.27s | 3/3 | 9.1 GB | pass |
-| L | spark | top_zones | 2.00s | 1.97s | 3/3 | 8.4 GB | pass |
-| L | spark | merge | 20s | 17s | 3/3 | 8.1 GB | pass |
+| L | spark4 | startup | 4.00s | 3.31s | 3/3 | 634 MB | - |
+| L | spark4 | transform_write | 25s | 23s | 3/3 | 11.3 GB | pass |
+| L | spark4 | aggregate | 2.81s | 2.27s | 3/3 | 9.1 GB | pass |
+| L | spark4 | top_zones | 2.00s | 1.97s | 3/3 | 8.4 GB | pass |
+| L | spark4 | merge | 20s | 17s | 3/3 | 8.1 GB | pass |
+| L | spark3 | startup | 3.38s | 2.94s | 3/3 | 527 MB | - |
+| L | spark3 | transform_write | 31s | 26s | 3/3 | 10.1 GB | pass |
+| L | spark3 | aggregate | 4.45s | 2.67s | 3/3 | 7.8 GB | pass |
+| L | spark3 | top_zones | 2.29s | 2.03s | 3/3 | 6.8 GB | pass |
+| L | spark3 | merge | 22s | 20s | 3/3 | 7.2 GB | pass |
 | L | duckdb | startup | 0.17s | 0.16s | 3/3 | 232 MB | - |
 | L | duckdb | transform_write | 4.70s | 4.62s | 3/3 | 4.6 GB | pass |
 | L | duckdb | aggregate | 0.23s | 0.23s | 3/3 | 2.4 GB | pass |
@@ -92,11 +111,16 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 | L | delta-rs | aggregate | 0.33s | 0.33s | 3/3 | 1.5 GB | pass |
 | L | delta-rs | top_zones | 0.25s | 0.24s | 3/3 | 1.5 GB | pass |
 | L | delta-rs | merge | 10s | 10s | 3/3 | 6.5 GB | pass |
-| XL | spark | startup | 4.14s | 3.33s | 3/3 | 636 MB | - |
-| XL | spark | transform_write | 51s | 49s | 3/3 | 12.0 GB | pass |
-| XL | spark | aggregate | 4.27s | 3.78s | 3/3 | 10.5 GB | pass |
-| XL | spark | top_zones | 3.31s | 3.26s | 3/3 | 9.2 GB | pass |
-| XL | spark | merge | 40s | 37s | 3/3 | 7.6 GB | pass |
+| XL | spark4 | startup | 4.14s | 3.33s | 3/3 | 636 MB | - |
+| XL | spark4 | transform_write | 51s | 49s | 3/3 | 12.0 GB | pass |
+| XL | spark4 | aggregate | 4.27s | 3.78s | 3/3 | 10.5 GB | pass |
+| XL | spark4 | top_zones | 3.31s | 3.26s | 3/3 | 9.2 GB | pass |
+| XL | spark4 | merge | 40s | 37s | 3/3 | 7.6 GB | pass |
+| XL | spark3 | startup | 3.50s | 3.42s | 3/3 | 534 MB | - |
+| XL | spark3 | transform_write | 68s | 66s | 3/3 | 10.5 GB | pass |
+| XL | spark3 | aggregate | 5.66s | 5.52s | 3/3 | 7.6 GB | pass |
+| XL | spark3 | top_zones | 3.09s | 3.00s | 3/3 | 4.8 GB | pass |
+| XL | spark3 | merge | 44s | 42s | 3/3 | 7.0 GB | pass |
 | XL | duckdb | startup | 0.18s | 0.18s | 3/3 | 308 MB | - |
 | XL | duckdb | transform_write | 11s | 11s | 3/3 | 5.7 GB | pass |
 | XL | duckdb | aggregate | 0.61s | 0.56s | 3/3 | 3.4 GB | pass |
@@ -122,6 +146,7 @@ Memory = peak RSS of the whole process tree (incl. Spark's JVM) during those sta
 
 ## Engine notes
 
-- spark: driver_memory=14g; delta_jars=local
+- spark4: driver_memory=14g; delta_jars=local
 - duckdb: read=delta_scan; write=delta-rs
 - polars: polars engine=streaming; write+merge=delta-rs
+- spark3: driver_memory=14g; delta_jars=local

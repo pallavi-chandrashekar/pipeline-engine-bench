@@ -1,6 +1,6 @@
 # pipeline-engine-bench
 
-**One Delta Lake pipeline, four engines, one machine. When do you actually need Spark?**
+**One Delta Lake pipeline, four engines, the same machine. When do you actually need Spark?**
 
 This repo runs the *same* bronze → silver → gold pipeline on **Apache Spark**, **DuckDB**,
 **Polars** and **delta-rs** over the same local Delta tables, at four data sizes (7.7M → 218M rows),
@@ -9,7 +9,7 @@ and records wall-clock time, peak memory of the whole process tree (JVM included
 without any of the benchmarked engines or their SQL; a run that gets the wrong answer doesn't count,
 however fast it was.
 
-**Short answer to the title:** for data that fits on one machine — up to 218M rows here — you don't.
+**Short answer to the title:** for data that fits on the same machine — up to 218M rows here — you don't.
 DuckDB and Polars run the whole pipeline in seconds; Spark pays a 5–6× tax it only begins to claw
 back at the largest size. The numbers, caveats and a few surprises are below.
 
@@ -34,18 +34,18 @@ One run on the same machine (macOS, 14 cores, 24 GB RAM), 3 repeats per engine �
 
 ![Pipeline time by engine and tier](results/bench-20261012-all/pipeline_time.png)
 
-- **You don't need Spark on one machine, even at 218M rows.** DuckDB and Polars finish the whole
+- **You don't need Spark on the same machine, even at 218M rows.** DuckDB and Polars finish the whole
   pipeline in ~5s at L (84.6M rows) and ~13–16s at XL (218M); Spark takes 34s and 63s. DuckDB and
   Polars win at every size tested.
 - **Spark's gap stays wide through L, then narrows at XL.** Spark is a flat 6.2–6.3× slower than
   DuckDB through L — not startup-dominated (startup is only ~3s of Spark's 10s at S), just a higher
   per-row cost. Only at XL does the ratio fall, to 4.9×, the first sign Spark's fixed costs amortize.
-  The crossover where Spark pays off sits beyond one machine, not within the sizes most jobs hit.
+  The crossover where Spark pays off sits beyond a single machine, not within the sizes most jobs hit.
   (The Spark figures above are Spark 4.0.1.)
 - **Spark 4 beats Spark 3 only at scale.** On the small tiers the two are within noise — Spark 3 is
   even a hair faster (S 9.3s vs 10s, M 13s vs 15s) — but Spark 4's engine work pays off as data
   grows: ~17% faster at L (34s vs 41s) and ~21% at XL (63s vs 80s). Neither version comes close to
-  DuckDB or Polars on one machine, so the version choice doesn't change the headline.
+  DuckDB or Polars on the same machine, so the version choice doesn't change the headline.
 - **delta-rs scales worst of the fast engines — and the cause is its query path, not Delta writes.**
   It tracks DuckDB/Polars at S and M, then jumps to 22s at L and **792s at XL** (~60× slower than
   DuckDB), almost all of it in `transform_write`. DuckDB writes its silver table through the *same*

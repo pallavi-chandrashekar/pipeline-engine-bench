@@ -1,11 +1,8 @@
-# CLAUDE.md
+# Development
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-# pipeline-engine-bench
-
-Benchmark of one Delta Lake pipeline on Spark, DuckDB, Polars and delta-rs. Results are published
-publicly, so correctness and fairness come before speed of development.
+Developer notes for working on pipeline-engine-bench: a benchmark of one Delta Lake pipeline on
+Spark, DuckDB, Polars and delta-rs. Results are published publicly, so correctness and fairness come
+before speed of development.
 
 - Current status and next steps: `PLAN.md`
 - Method and fairness rules: `README.md`

@@ -1,0 +1,18 @@
+# Spark 3.5 comparison environment. Spark 3 and Spark 4 cannot share one venv (conflicting
+# pyspark / delta-spark), so this installs into a separate .venv-spark3 used only to run the
+# `spark` engine on Spark 3.x for the Spark 3 vs Spark 4 comparison (see PLAN.md).
+#
+#   python3 -m venv .venv-spark3
+#   .venv-spark3/bin/pip install -r requirements-spark3.txt
+#   JAVA_HOME=$(brew --prefix openjdk@17)/... .venv-spark3/bin/python -m bench.harness \
+#     --engines spark --tiers S,M,L,XL --repeats 3 --run-id <id>-spark3
+#
+# delta-spark 3.2.x pairs with Spark 3.5.x; both support the TIMESTAMP_NTZ schema this repo uses.
+pyspark==3.5.3
+delta-spark==3.2.1
+deltalake>=1.6
+pyarrow>=18
+pandas>=2.2
+numpy>=1.26
+psutil>=6
+matplotlib>=3.8

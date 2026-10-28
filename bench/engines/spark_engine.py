@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import psutil
+import pyarrow as pa
 
 from bench import config as C
 from bench import workload as W
@@ -106,11 +107,18 @@ class SparkEngine:
     def register_silver(self, silver_path):
         self._read(silver_path).createOrReplaceTempView("silver")
 
+    @staticmethod
+    def _to_arrow(df):
+        # DataFrame.toArrow() is Spark 4.0+; Spark 3.x exposes _collect_as_arrow().
+        if hasattr(df, "toArrow"):
+            return df.toArrow()
+        return pa.Table.from_batches(df._collect_as_arrow())
+
     def aggregate(self):
-        return self.spark.sql(W.AGGREGATE_SQL).toArrow()
+        return self._to_arrow(self.spark.sql(W.AGGREGATE_SQL))
 
     def top_zones(self):
-        return self.spark.sql(W.TOP_ZONES_SQL).toArrow()
+        return self._to_arrow(self.spark.sql(W.TOP_ZONES_SQL))
 
     def merge(self, target_path, corrections_path):
         if self.no_delta:

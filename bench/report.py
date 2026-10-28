@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+import textwrap
 from pathlib import Path
 
 import matplotlib
@@ -14,19 +15,27 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
-
-from bench.engines import ENGINES  # noqa: E402
+from matplotlib.ticker import FuncFormatter, MultipleLocator  # noqa: E402
 
 PIPELINE_STAGES = ["startup", "transform_write", "aggregate", "top_zones"]
 TIER_ORDER = ["SYN", "S", "M", "L", "XL"]
 
+# Display order and colour for engine labels. `spark4`/`spark3` are version-tagged
+# variants of `spark` used when a run compares Spark versions (see --run-id *-spark3).
+ENGINE_ORDER = ["spark", "spark4", "spark3", "duckdb", "polars", "delta-rs"]
+
 # Fixed categorical order (colour follows the engine, never its rank).
-COLORS = {"spark": "#2a78d6", "duckdb": "#eb6834", "polars": "#1baf7a", "delta-rs": "#eda100"}
+COLORS = {"spark": "#2a78d6", "spark4": "#2a78d6", "spark3": "#7fb3ec",
+          "duckdb": "#eb6834", "polars": "#1baf7a", "delta-rs": "#eda100"}
 INK, INK_2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 
 
 def _tier_key(t):
     return TIER_ORDER.index(t) if t in TIER_ORDER else len(TIER_ORDER)
+
+
+def _engine_key(e):
+    return ENGINE_ORDER.index(e) if e in ENGINE_ORDER else len(ENGINE_ORDER)
 
 
 def _valid(runs: pd.DataFrame) -> pd.Series:
@@ -84,7 +93,7 @@ def pipeline_totals(s: pd.DataFrame, runs: pd.DataFrame) -> pd.DataFrame:
         ))
     out = pd.DataFrame(rows)
     out["_t"] = out.tier.map(_tier_key)
-    out["_e"] = out.engine.map(lambda e: ENGINES.index(e) if e in ENGINES else 99)
+    out["_e"] = out.engine.map(_engine_key)
     return out.sort_values(["_t", "_e"]).drop(columns=["_t", "_e"])
 
 
@@ -107,7 +116,7 @@ def small_multiples(totals: pd.DataFrame, value: str, status: str | None, title:
     if totals[value].dropna().empty:
         return
     tiers = sorted(totals.tier.unique(), key=_tier_key)
-    engines = [e for e in ENGINES if e in set(totals.engine)]
+    engines = sorted(set(totals.engine), key=_engine_key)
     fig, axes = plt.subplots(1, len(tiers), figsize=(max(5.5, 3.6 * len(tiers)), 0.55 * len(engines) + 1.9),
                              dpi=150, squeeze=False)
     fig.patch.set_facecolor(SURFACE)
@@ -196,7 +205,7 @@ def build(run_dir: Path) -> None:
               "|---|---|---|---:|---:|---:|---:|---|"]
     order = ["startup", "transform_write", "aggregate", "top_zones", "merge"]
     s["_t"], s["_st"] = s.tier.map(_tier_key), s.stage.map(lambda x: order.index(x) if x in order else 9)
-    s["_e"] = s.engine.map(lambda e: ENGINES.index(e) if e in ENGINES else 99)
+    s["_e"] = s.engine.map(_engine_key)
     for r in s.sort_values(["_t", "_e", "_st"]).itertuples():
         med = _fmt_s(r.median_s) if r.status == "ok" else r.status
         lines.append(f"| {r.tier} | {r.engine} | {r.stage} | {med} | {_fmt_s(r.min_s)} | {r.valid_runs}/{r.total_runs} | "

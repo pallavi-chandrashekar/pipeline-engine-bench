@@ -109,6 +109,24 @@ Tick boxes as you go, and keep this file in the repo so the status is visible.
 - [ ] (you) Pin the repo on your GitHub profile; add topics: `delta-lake`, `spark`, `duckdb`,
   `polars`, `benchmark`, `data-engineering`
 
+## Spark 3 vs Spark 4 comparison — in progress (2026-10-28)
+
+Does Spark 4's engine close any of the one-machine gap vs Spark 3? Spark 3 and Spark 4 **cannot
+share a venv** (conflicting `pyspark` / `delta-spark`), so this runs as a separate environment, not
+a fifth engine in the code.
+
+- [x] `requirements-spark3.txt` + a separate `.venv-spark3` (`pyspark 3.5.3`, `delta-spark 3.2.1`;
+  both support the `TIMESTAMP_NTZ` schema). Spark 3.5 needs **Java ≤ 17**, so use `openjdk@17`
+  (Spark 4 uses 21). Set `JAVA_HOME` to the 17 home for this run.
+- [x] `bench/engines/spark_engine.py`: `_to_arrow` shim — `DataFrame.toArrow()` is Spark 4.0+;
+  Spark 3.x uses the private `_collect_as_arrow()`. Backward compatible, no change to Spark 4 runs.
+- [x] **Set aside the jar cache** (`data/.spark_delta_jars.json`) before the Spark 3 run — it holds
+  delta-spark 4.0 jar paths; loading those into Spark 3.5 breaks it. Restore the Spark 4 cache after.
+- [x] Run: `JAVA_HOME=<17> .venv-spark3/bin/python -m bench.harness --engines spark
+  --tiers S,M,L,XL --repeats 3 --run-id bench-20261012-spark3`.
+- [ ] Relabel `spark`→`spark4` (existing runs) / `spark3` (new run) and regenerate the combined
+  charts so Spark 3 shows as a fifth bar; add a Spark 3 vs 4 row to the README Results table.
+
 ## Backlog (not blocking publication)
 
 - [ ] Memory: report USS, or cgroup `memory.peak` on Linux, alongside RSS (RSS counts mmapped

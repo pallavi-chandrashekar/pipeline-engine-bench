@@ -4,8 +4,10 @@ Developer notes for working on pipeline-engine-bench: a benchmark of one Delta L
 Spark, DuckDB, Polars and delta-rs. Results are published publicly, so correctness and fairness come
 before speed of development.
 
-- Current status and next steps: `PLAN.md`
-- Method and fairness rules: `README.md`
+- Current status and next steps: [`PLAN.md`](PLAN.md)
+- Results and headline findings: [`README.md`](README.md)
+- The pipeline and data tiers: [`docs/pipeline.md`](docs/pipeline.md)
+- Method and fairness rules: [`docs/method.md`](docs/method.md)
 
 ## Commands
 
@@ -47,14 +49,35 @@ Each run writes `results/<run_id>/`: `runs.csv` (one row per stage, appended liv
 and the report. Stage `status` is one of `ok`, `n/a` (NotSupported, e.g. DuckDB MERGE), `error`,
 `skipped`, `crashed`, `killed` (SIGKILL/OOM), `timeout`, `missing`; `verified` is `pass`/`FAIL:…`.
 
+## Layout
+
+```
+bench/
+  config.py         tiers, sources, canonical schema
+  ingest.py         Delta Sharing / TLC download -> staging -> local Delta tiers
+  synth.py          synthetic taxi-shaped tier for offline tests
+  workload.py       the SQL + stage definitions
+  engines/          one adapter per engine (same 7-method interface)
+  run_engine.py     worker: one engine, one tier, one fresh process
+  harness.py        orchestration, memory sampling, repeats
+  verify.py         engine-independent reference + correctness checks
+  report.py         summary.md, CSVs, charts
+tests/              offline tests (ingest shapes, share download, reference independence,
+                    report rules, end-to-end smoke)
+```
+
+**Adding an engine:** implement the interface in `bench/engines/__init__.py`, register it in
+`load()` and `ENGINES` (and `MERGE_CAPABLE` if it can MERGE), run `make test`. Pull requests welcome:
+DataFusion Python, Daft, chDB and Spark Connect would all be interesting additions.
+
 ## Rules for changes
 
 - Spark, DuckDB and delta-rs must keep running the **same SQL text** from `bench/workload.py`.
   Polars mirrors that logic in its expression API. A change to one means changing all four.
 - `bench/verify.py` must stay independent of the engines and the shared SQL (pyarrow only).
   `tests/test_bench.py::test_reference_catches_a_bug_in_the_shared_sql` guards this.
-- Any non-default engine setting must be disclosed in the README's "Fairness notes" and recorded
-  in `env.json` (`RECORDED_ENV` in `bench/harness.py`).
+- Any non-default engine setting must be disclosed in the "Fairness notes" ([`docs/method.md`](docs/method.md))
+  and recorded in `env.json` (`RECORDED_ENV` in `bench/harness.py`).
 - Never publish numbers from `BENCH_SPARK_NO_DELTA=1` runs.
 - New engine: implement the interface in `bench/engines/__init__.py`, add it to `ENGINES`,
   `MERGE_CAPABLE` (if it can MERGE) and `load()`.

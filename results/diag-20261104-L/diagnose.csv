@@ -1,0 +1,10 @@
+tier,experiment,seconds,first_batch_s,exec_s,rows,file_count,peak_rss_mb,swap_growth_mb,exit
+L,probe,2.961,2.958,0.005,,,9074.8,0.0,0
+L,query_only,18.991,2.652,0.057,83688137,,12236.9,47.6,0
+L,write_only,3.457,,,,24,12374.0,0.0,0
+L,deltars_e2e,24.004,,,,24,10708.2,39.1,0
+L,duckdb_e2e,4.622,,,,24,5137.9,-8.0,0
+L,ablate_filter,0.466,0.051,0.018,83688137,,1527.0,0.0,0
+L,ablate_inner,0.553,0.04,0.008,83688137,,1587.2,0.0,0
+L,ablate_left,0.539,0.034,0.004,83688137,,1540.7,0.0,0
+L,ablate_bothjoins,20.617,2.536,0.007,83688137,,11353.3,132.7,0

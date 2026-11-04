@@ -2,7 +2,7 @@ PY ?= .venv/bin/python
 REPEATS ?= 3
 
 # data-% is a pattern rule; its targets must NOT be .PHONY or make skips the pattern search.
-.PHONY: setup test smoke list-share bench bench-xl report clean
+.PHONY: setup test smoke list-share bench bench-xl report diagnose clean
 
 setup:            ## create .venv and install everything
 	python3 -m venv .venv
@@ -30,6 +30,9 @@ bench-xl:         ## the XL tier on its own (long; needs ~40 GB free disk)
 
 report:           ## rebuild summary + charts: make report RUN=results/<run_id>
 	$(PY) -m bench.report $(RUN)
+
+diagnose:         ## isolate delta-rs's slow stage: make diagnose TIER=XL (see docs/deltars-investigation.md)
+	$(PY) -m bench.diagnose_deltars --tier $(or $(TIER),XL)
 
 clean:            ## remove downloaded data and staging (keeps results)
 	rm -rf data

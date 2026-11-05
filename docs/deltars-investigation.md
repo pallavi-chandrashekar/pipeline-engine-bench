@@ -108,10 +108,35 @@ The shape points at delta-rs's embedded DataFusion building a pathological plan 
 the same tiny dimension table — most likely repartitioning the 84M-row trips side for the second join
 instead of broadcasting the 265-row `zones` table (consistent with the ~7× memory blow-up).
 
-### XL (218.1M rows) — pending
+### XL (218.1M rows) — measured (`results/diag-20261104-XL/`)
 
-`results/diag-20261104-XL/` confirms whether the same pattern holds at the headline size. (Filled in
-once the run completes.)
+| Query (214M rows out) | Time | First batch | Peak RSS | Swap growth |
+|---|---:|---:|---:|---:|
+| `ablate_filter` (no joins) | 1.0s | 0.05s | 1.6 GB | 0 |
+| `ablate_inner` (one join) | 1.2s | 0.04s | 1.8 GB | 0 |
+| `ablate_left` (one join) | 1.1s | 0.04s | 1.8 GB | 0 |
+| `ablate_bothjoins` (both joins) | **563s** | 98s | **13.2 GB** | **+8.8 GB** |
+| `query_only` (full query) | 599s | 134s | 13.0 GB | +5.9 GB |
+| `write_only` (writer alone) | 9.6s | — | 13.6 GB | — |
+| `duckdb_e2e` (DuckDB + same writer) | 10.6s | — | 6.5 GB | — |
+| `deltars_e2e` (query + write) | 677s | — | 13.7 GB | +6.3 GB |
+
+**Conclusion (XL):** the L pattern holds and intensifies. The write path is still fine (9.6s;
+DuckDB does query+write in 10.6s). One join is ~1s; the **second** join takes it to 563s — a ~470×
+jump — and `query_only` ≈ `deltars_e2e`, so it's the query, not the write.
+
+**What's new at XL: memory pressure arrives.** At L the two-join query used ~11 GB with <150 MB swap
+(CPU-bound). At XL it peaks at 13 GB and pushes **~6–9 GB into swap** on the 24 GB machine, and the
+first batch is delayed ~100–134s — it stops streaming and materializes a large intermediate. So at
+the headline size the slowdown is a **compound**: a pathological two-join plan that **also doesn't
+spill well**, exactly the "H1 + H2 together" outcome.
+
+### Bottom line
+
+- Not the writer (proven at both sizes).
+- Not "joins" in general, and not the `EXTRACT` scalars — specifically the **second join** to the
+  tiny `zones` table: one join ≈ 0.5–1s, two joins blow up ~36× (L) to ~470× (XL).
+- Memory is not the cause at L but becomes a major compounding factor at XL (6–9 GB swap).
 
 ## Follow-ups
 

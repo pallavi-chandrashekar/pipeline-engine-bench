@@ -129,6 +129,22 @@ a fifth engine in the code.
   the README Results. **Result:** Spark 3 edges Spark 4 at S/M (within noise), Spark 4 is ~17% faster
   at L and ~21% at XL — its engine work pays off at scale; neither nears DuckDB/Polars on one machine.
 
+## delta-rs slowdown — investigated (2026-11-04)
+
+The README claimed delta-rs's XL slowdown was "the DataFusion joins" — a deduction (query and write
+were timed together). `bench/diagnose_deltars.py` (+ `make diagnose`, `docs/deltars-investigation.md`)
+split the stage apart and measured it at L and XL.
+
+- [x] Proven: it's the query, not the write (`query_only` 19s/599s vs `write_only` 3.5s/9.6s; DuckDB
+  does query+write through the same writer in 4.6s/10.6s).
+- [x] Pinned the cause: the **second** join to the 265-row zones table. One join ≈ 0.5s (L) / 1s (XL);
+  adding the second explodes it ~36× (L) / ~470× (XL, 1.2s → 563s). Not the year/month `EXTRACT`.
+- [x] Memory: *not* the cause at L (<150 MB swap), but a major compounding factor at XL (13 GB peak,
+  ~6–9 GB swap on 24 GB). "H1 + H2 together."
+- [x] Corrected the README delta-rs bullet to the measured cause and linked the investigation.
+- [ ] Follow-up: run the same two-join SQL on standalone `datafusion` (vs the version delta-rs embeds)
+  to confirm it's the engine, not the wrapper; consider a minimal upstream issue.
+
 ## Backlog (not blocking publication)
 
 - [ ] Memory: report USS, or cgroup `memory.peak` on Linux, alongside RSS (RSS counts mmapped

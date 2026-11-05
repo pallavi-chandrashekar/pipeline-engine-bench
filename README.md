@@ -46,11 +46,15 @@ One run on the same machine (macOS, 14 cores, 24 GB RAM), 3 repeats per engine �
   even a hair faster (S 9.3s vs 10s, M 13s vs 15s) — but Spark 4's engine work pays off as data
   grows: ~17% faster at L (34s vs 41s) and ~21% at XL (63s vs 80s). Neither version comes close to
   DuckDB or Polars on the same machine, so the version choice doesn't change the headline.
-- **delta-rs scales worst of the fast engines — and the cause is its query path, not Delta writes.**
-  It tracks DuckDB/Polars at S and M, then jumps to 22s at L and **792s at XL** (~60× slower than
-  DuckDB), almost all of it in `transform_write`. DuckDB writes its silver table through the *same*
-  delta-rs writer and finishes that stage in 4.7s (L) / 11s (XL) — so the slowdown is in delta-rs's
-  embedded DataFusion execution of the joins (`QueryBuilder`), not in writing Delta.
+- **delta-rs collapses on the *second* join — not on Delta writes.** It tracks DuckDB/Polars at S and
+  M, then jumps to 22s at L and **792s at XL** (~60× slower than DuckDB), almost all in
+  `transform_write`. A [per-stage diagnosis](docs/deltars-investigation.md) isolates the cause: the
+  writer is fine (writing a precomputed silver takes 3.5s at L / 9.6s at XL, and DuckDB does
+  query+write through the *same* delta-rs writer in 4.6s / 11s). The cost is delta-rs's embedded
+  DataFusion query — and specifically the **second** join: one join to the 265-row zones table is
+  ~0.5s (L) / ~1s (XL), but adding the second explodes it ~36× at L and ~470× at XL (1.2s → 563s).
+  At L that's CPU-bound (~11 GB, no swap); at XL the plan also balloons to 13 GB and spills ~6–9 GB to
+  swap. A bad two-join plan that doesn't spill well — not slow writes, and at L not memory either.
 - **Only 3 of 4 engines can MERGE into Delta.** Spark, delta-rs and Polars can; DuckDB's `delta`
   extension can INSERT but not MERGE/UPDATE, so its MERGE is `n/a`. Polars delegates its writes and
   MERGE to delta-rs, so those two share a code path (and near-identical MERGE bars).
@@ -113,6 +117,8 @@ These settings are recorded in each run's `env.json` and `summary.md`.
   SQL, and where the data comes from.
 - **[Method & fairness notes](docs/method.md)** — how time, memory and correctness are measured, and
   the caveats to read before quoting any number.
+- **[Why delta-rs slows down at XL](docs/deltars-investigation.md)** — a per-stage diagnosis that
+  traces the 792s to the second join (not writes, not memory at L) with a reproducible script.
 - **[Development](DEVELOPMENT.md)** — architecture, repo layout, and how to add an engine.
 - **[Plan](PLAN.md)** — status and next steps. **[`results/`](results/)** — every run's tables,
   CSVs, charts and `env.json`.
